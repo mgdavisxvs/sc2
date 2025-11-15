@@ -241,6 +241,7 @@
             </div>
             <div id="buildWarnings" class="mt-2 text-xs text-amber-600"></div>
             <div class="mt-3 flex flex-wrap gap-2">
+              <button id="visualizeBuild" class="px-3 py-1 rounded bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-medium hover:from-purple-700 hover:to-blue-700 transition shadow-sm">📊 Visualize</button>
               <button id="clearBuild" class="px-3 py-1 rounded border text-sm">Clear</button>
               <button id="copyText" class="px-3 py-1 rounded border text-sm">Copy (text)</button>
               <button id="copyJson" class="px-3 py-1 rounded border text-sm">Copy (JSON)</button>
@@ -308,6 +309,23 @@
     <img id="lightboxImg"
          class="max-h-[85vh] max-w-[85vw] rounded shadow-2xl"
          alt="Full size image" />
+  </div>
+
+  <!-- Visualization Modal -->
+  <div id="visualizationModal"
+       class="fixed inset-0 hidden bg-white dark:bg-slate-900 z-50 overflow-y-auto">
+    <div class="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 shadow-sm">
+      <div class="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
+        <h2 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+          Build Order Visualization
+        </h2>
+        <button id="closeVisualization"
+                class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-sm font-medium">
+          ✕ Close
+        </button>
+      </div>
+    </div>
+    <div id="visualizationContainer" class="max-w-[1600px] mx-auto px-6 py-6"></div>
   </div>
 
   <!-- Main application entry point -->

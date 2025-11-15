@@ -15,6 +15,7 @@ import { renderBuildList } from './ui/build.js';
 import { renderCharts } from './ui/charts.js';
 import { initTheme, applyRaceTheme } from './ui/theme.js';
 import { showStatus } from './ui/status.js';
+import createVisualizationDashboard from './ui/visualization-dashboard.js';
 
 // Global database instance
 let db = null;
@@ -229,6 +230,48 @@ function initEventHandlers() {
     a.download = 'build-order.json';
     a.click();
     URL.revokeObjectURL(a.href);
+  });
+
+  // Visualize build
+  $('#visualizeBuild')?.addEventListener('click', () => {
+    if (!state.build || state.build.length === 0) {
+      showStatus('Build order is empty - add some units/buildings first', 'error', 3000);
+      return;
+    }
+
+    // Show modal
+    const modal = $('#visualizationModal');
+    const container = $('#visualizationContainer');
+
+    if (!modal || !container) {
+      showStatus('Visualization modal not found', 'error');
+      return;
+    }
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    // Create visualization dashboard
+    try {
+      createVisualizationDashboard(container, state.build, state.race, db, {
+        showTimeline: true,
+        showResources: true,
+        showDependencies: true,
+      });
+      showStatus('Visualization rendered', 'success');
+    } catch (err) {
+      logger.error('Visualization error:', err);
+      showStatus('Failed to render visualization: ' + err.message, 'error', 4000);
+    }
+  });
+
+  // Close visualization modal
+  $('#closeVisualization')?.addEventListener('click', () => {
+    const modal = $('#visualizationModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
   });
 
   // Auto build
