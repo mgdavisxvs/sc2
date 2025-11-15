@@ -273,7 +273,7 @@ export function analyzeParetoFrontier(builds, objectives) {
 export function nonDominatedSort(population, objectives) {
   const fronts = [[]];
   const dominatedCount = new Map(); // How many individuals dominate this one
-  const dominates Map = new Map(); // Which individuals this one dominates
+  const dominatesMap = new Map(); // Which individuals this one dominates
 
   // Calculate dominance relationships
   for (let i = 0; i < population.length; i++) {
