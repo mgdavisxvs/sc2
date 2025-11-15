@@ -16,6 +16,8 @@ import { renderCharts } from './ui/charts.js';
 import { initTheme, applyRaceTheme } from './ui/theme.js';
 import { showStatus } from './ui/status.js';
 import createVisualizationDashboard from './ui/visualization-dashboard.js';
+import renderBuildLibrary from './ui/build-library.js';
+import { getBuildDatabase } from './data/build-database.js';
 
 // Global database instance
 let db = null;
@@ -268,6 +270,80 @@ function initEventHandlers() {
   // Close visualization modal
   $('#closeVisualization')?.addEventListener('click', () => {
     const modal = $('#visualizationModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+  });
+
+  // Save build
+  $('#saveBuild')?.addEventListener('click', async () => {
+    if (!state.build || state.build.length === 0) {
+      showStatus('Build order is empty - add some units/buildings first', 'error', 3000);
+      return;
+    }
+
+    const name = prompt('Build name:', 'My Build');
+    if (!name) return;
+
+    const description = prompt('Description (optional):', '');
+    const tagsInput = prompt('Tags (comma-separated, e.g., "rush, 2-gate, pvz"):', '');
+    const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
+
+    try {
+      const buildDb = getBuildDatabase();
+      await buildDb.init();
+
+      const saved = await buildDb.saveBuild(state.build, {
+        name,
+        description,
+        race: state.race,
+        tags,
+      });
+
+      showStatus(`Build saved: ${saved.name}`, 'success');
+    } catch (err) {
+      logger.error('Failed to save build:', err);
+      showStatus('Failed to save build: ' + err.message, 'error', 4000);
+    }
+  });
+
+  // Open library
+  $('#openLibrary')?.addEventListener('click', async () => {
+    const modal = $('#libraryModal');
+    const container = $('#libraryContainer');
+
+    if (!modal || !container) {
+      showStatus('Library modal not found', 'error');
+      return;
+    }
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    try {
+      await renderBuildLibrary(container, (build) => {
+        // Load build into current state
+        state.clearBuild();
+        build.buildOrder.forEach(item => {
+          state.addToBuild(item, false, []);
+        });
+        renderBuildList(true);
+        renderCharts();
+
+        // Close modal
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+      });
+    } catch (err) {
+      logger.error('Library error:', err);
+      showStatus('Failed to open library: ' + err.message, 'error', 4000);
+    }
+  });
+
+  // Close library modal
+  $('#closeLibrary')?.addEventListener('click', () => {
+    const modal = $('#libraryModal');
     if (modal) {
       modal.classList.add('hidden');
       document.body.style.overflow = '';
