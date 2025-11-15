@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <title>SC2 JSON Viewer + Build Order Lab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Fonts & Tailwind -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Inconsolata:wght@400;600&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial'],
+          mono: ['Inconsolata', 'ui-monospace', 'SFMono-Regular', 'Menlo']
+        },
+        extend: {
+          colors: {
+            protoss: { 50:'#eef2ff', 500:'#2563eb', 600:'#1d4ed8' },
+            terran:  { 50:'#fef2f2', 500:'#ef4444', 600:'#dc2626' },
+            zerg:    { 50:'#f5f3ff', 500:'#6d28d9', 600:'#5b21b6' },
+            steel: '#334155',
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- D3 for mini charts -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <style>
+    :root { color-scheme: light dark; }
+    html[data-theme="dark"] body { background: #0b1220; color: #e5e7eb; }
+    html[data-theme="dark"] .card { background: #0f172a; }
+    html[data-theme="light"] .card { background: white; }
+    .img-zoom { transition: transform 160ms ease; }
+    .img-zoom:hover { transform: scale(1.06); }
+    .fade-in { animation: fadeIn 200ms ease-out both; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    /* Drag & Drop overlay */
+    #drop-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .2s ease-in-out;
+    }
+    #drop-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+    /* Status Toast */
+    #status-message {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: .5rem .875rem;
+      border-radius: .5rem;
+      box-shadow: 0 4px 14px rgba(0,0,0,.15);
+      z-index: 110;
+      opacity: 0;
+      transition: opacity .25s ease, transform .25s ease;
+      pointer-events: none;
+    }
+    #status-message.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    #status-message.hide {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-8px);
+    }
+    /* D3 axes */
+    .d3-axis path, .d3-axis line { stroke: #94a3b8; }
+    .d3-axis text { fill: #64748b; font-family: Inconsolata, monospace; font-size: 10px; }
+    html[data-theme="dark"] .d3-axis path,
+    html[data-theme="dark"] .d3-axis line { stroke: #475569; }
+    html[data-theme="dark"] .d3-axis text { fill: #cbd5e1; }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-slate-800 selection:text-white">
+
+  <!-- Status Toast -->
+  <div id="status-message" class="bg-blue-500 text-white text-sm">Ready</div>
+
+  <!-- Drag & Drop Overlay -->
+  <div id="drop-overlay">
+    <div class="text-center p-10 border-4 border-dashed border-gray-400 rounded-lg bg-gray-800 bg-opacity-80">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+           stroke-width="1.5" stroke="currentColor"
+           class="w-16 h-16 mx-auto text-gray-300 mb-4">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+      </svg>
+      <p class="text-2xl font-bold text-white">Drop sc2units.json Here</p>
+      <p class="text-sm text-slate-200 mt-2">or use the “Load JSON” button in the header</p>
+    </div>
+  </div>
+
+  <!-- Optional embedded JSON (kept empty by default) -->
+  <script id="sc2-data" type="application/json"></script>
+
+  <header class="sticky top-0 z-30 border-b border-slate-200/40 backdrop-blur bg-white/75 dark:bg-slate-900/60">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div id="raceDot" class="w-3 h-3 rounded-full bg-steel"></div>
+        <h1 class="text-xl md:text-2xl font-semibold tracking-tight">
+          SC2 JSON Viewer + Build Order Lab
+        </h1>
+        <span id="raceBadge"
+              class="ml-2 text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700">-</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <span id="schemaSummary" class="text-xs text-slate-500 mr-2">
+          No JSON loaded.
+        </span>
+        <input id="imgRoot" type="text"
+               placeholder="Image root (e.g., ./jpgFiles/)"
+               class="hidden md:block w-56 px-3 py-1 rounded border text-xs dark:bg-slate-900 dark:border-slate-700"
+               title="Prefix added to every relative image path" />
+        <button id="themeToggle"
+                class="text-xs px-3 py-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                aria-label="Toggle base theme">
+          Theme
+        </button>
+        <button id="darkModeToggle"
+                class="text-xs px-3 py-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                aria-label="Dark mode">
+          Dark
+        </button>
+        <label
+          class="text-xs px-3 py-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
+          Load JSON
+          <input id="fileInput" type="file" accept="application/json,.json" class="hidden" />
+        </label>
+        <button id="autoBuild"
+                class="text-xs px-3 py-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800">
+          Auto Build
+        </button>
+        <button id="exportBuild"
+                class="text-xs px-3 py-1 rounded bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900">
+          Export Build
+        </button>
+      </div>
+    </div>
+    <div id="brokenBanner"
+         class="hidden bg-amber-50 text-amber-900 dark:bg-amber-900/30 dark:text-amber-100 border-t border-amber-200 dark:border-amber-800">
+      <div class="max-w-7xl mx-auto px-4 py-2 text-sm flex items-center gap-2">
+        <strong class="font-semibold">Image issues detected:</strong>
+        <span id="brokenCount">0</span> broken image(s).
+        <button id="copyBroken"
+                class="ml-auto px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 text-xs">
+          Copy list
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-4 md:py-6">
+    <!-- Race selector -->
+    <nav class="flex flex-wrap gap-2 mb-4">
+      <button data-race="protoss"
+              class="race-tab px-3 py-1 rounded-full border text-sm hover:shadow inline-flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-protoss-500"></span> Protoss
+      </button>
+      <button data-race="terran"
+              class="race-tab px-3 py-1 rounded-full border text-sm hover:shadow inline-flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-terran-500"></span> Terran
+      </button>
+      <button data-race="zerg"
+              class="race-tab px-3 py-1 rounded-full border text-sm hover:shadow inline-flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-zerg-500"></span> Zerg
+      </button>
+    </nav>
+
+    <!-- Tabs + search/sort -->
+    <div class="flex flex-wrap items-center gap-3 mb-4">
+      <div class="inline-flex rounded-lg border overflow-hidden">
+        <button class="section-tab px-3 py-1 text-sm border-r" data-section="units">Units</button>
+        <button class="section-tab px-3 py-1 text-sm border-r" data-section="buildings">Buildings</button>
+        <button class="section-tab px-3 py-1 text-sm" data-section="upgrades">Upgrades</button>
+      </div>
+
+      <div class="flex items-center gap-2 grow">
+        <input id="searchInput" type="search" placeholder="Search by name…"
+               class="grow px-3 py-2 rounded border text-sm outline-none focus:ring-2 ring-slate-400 dark:bg-slate-900 dark:border-slate-700" />
+        <select id="sortSelect"
+                class="px-2 py-2 rounded border text-sm dark:bg-slate-900 dark:border-slate-700">
+          <option value="">Sort…</option>
+          <option value="mineral">Mineral</option>
+          <option value="gas">Gas</option>
+          <option value="supply">Supply</option>
+          <option value="buildtime">Build time</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <!-- Left: main cards -->
+      <section class="lg:col-span-9">
+        <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3"></div>
+
+        <!-- Extras Gallery -->
+        <details class="mt-6 border rounded-lg p-3 bg-slate-50 dark:bg-slate-900/40">
+          <summary class="cursor-pointer font-semibold">Extras Gallery (Unmapped Assets)</summary>
+          <div id="extrasWrap" class="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+        </details>
+      </section>
+
+      <!-- Right: Build order + charts -->
+      <aside class="lg:col-span-3">
+        <div class="sticky top-24 space-y-4">
+          <div class="card rounded-xl border shadow-sm p-3">
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="font-semibold">Build Order</h2>
+              <div class="text-xs text-slate-500">Drag to reorder</div>
+            </div>
+            <ul id="buildList" class="space-y-2 min-h-[80px]"></ul>
+            <div class="mt-3 text-sm grid grid-cols-3 gap-2">
+              <div class="p-2 rounded border">
+                <div class="text-xs text-slate-500">Mineral</div>
+                <div id="totMineral" class="font-semibold">0</div>
+              </div>
+              <div class="p-2 rounded border">
+                <div class="text-xs text-slate-500">Gas</div>
+                <div id="totGas" class="font-semibold">0</div>
+              </div>
+              <div class="p-2 rounded border">
+                <div class="text-xs text-slate-500">Supply</div>
+                <div id="totSupply" class="font-semibold">0</div>
+              </div>
+            </div>
+            <div id="buildWarnings" class="mt-2 text-xs text-amber-600"></div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button id="clearBuild" class="px-3 py-1 rounded border text-sm">Clear</button>
+              <button id="copyText" class="px-3 py-1 rounded border text-sm">Copy (text)</button>
+              <button id="copyJson" class="px-3 py-1 rounded border text-sm">Copy (JSON)</button>
+            </div>
+          </div>
+
+          <div class="card rounded-xl border shadow-sm p-3">
+            <div class="mb-2 flex items-center justify-between">
+              <h3 class="font-semibold">Build Analysis</h3>
+              <span class="text-xs text-slate-500">D3 mini charts</span>
+            </div>
+            <div class="space-y-3">
+              <div>
+                <div class="text-xs text-slate-500 mb-1">Cumulative Supply vs Step</div>
+                <svg id="chartSupply" class="w-full h-32"></svg>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500 mb-1">Cumulative Mineral & Gas</div>
+                <svg id="chartRes" class="w-full h-32"></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Card Template -->
+  <template id="cardTpl">
+    <article class="card rounded-xl border shadow-sm overflow-hidden">
+      <div class="relative">
+        <img loading="lazy" class="w-full aspect-video object-cover img-zoom card-img"
+             src="" alt="Entity image" />
+        <button class="openLightbox absolute bottom-2 right-2 text-xs px-2 py-1 rounded bg-black/60 text-white hover:bg-black/80">
+          Zoom
+        </button>
+      </div>
+      <div class="p-3">
+        <div class="flex items-start justify-between gap-2">
+          <h3 class="font-semibold truncate title"></h3>
+          <button class="addBtn text-xs px-2 py-1 rounded border">Add</button>
+        </div>
+        <div class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+          <div><span class="text-slate-500">Mineral:</span> <span data-key="mineral">-</span></div>
+          <div><span class="text-slate-500">Gas:</span> <span data-key="gas">-</span></div>
+          <div><span class="text-slate-500">Supply:</span> <span data-key="supply">-</span></div>
+          <div><span class="text-slate-500">Build:</span> <span data-key="buildtime">-</span></div>
+        </div>
+        <div class="mt-3">
+          <div class="text-xs text-slate-500 mb-1">Requirements</div>
+          <div class="flex flex-wrap gap-1 reqs"></div>
+          <div class="mt-2 hidden techTree text-xs"></div>
+        </div>
+        <div class="mt-3 flex gap-2">
+          <button class="px-2 py-1 text-xs border rounded toggleTree">Tech Tree</button>
+          <button class="px-2 py-1 text-xs border rounded jumpDeps">Highlight prereqs</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <!-- Lightbox Modal -->
+  <div id="lightbox"
+       class="fixed inset-0 hidden items-center justify-center bg-black/80 z-50 p-4">
+    <img id="lightboxImg"
+         class="max-h-[85vh] max-w-[85vw] rounded shadow-2xl"
+         alt="Full size image" />
+  </div>
+
+  <!-- Hidden extra file input (for future use) -->
+  <input type="file" id="json-file-input" class="hidden" accept=".json,application/json" />
+
+  <script>
+    // SC2 JSON Viewer + Build Order Lab
+    // Tuned for sc2units.json (unit/building/upgrade/extras by race).
+    // Emphasis on clear invariants, defensive defaults, and simple-but-explicit algorithms.
+
+    (function () {
+      'use strict';
+
+      // ---------- Logger ----------
+      const Logger = {
+        level: 'INFO', // 'DEBUG'|'INFO'|'WARN'|'ERROR'
+        _levels: ['DEBUG', 'INFO', 'WARN', 'ERROR'],
+        _log(level, ...args) {
+          if (this._levels.indexOf(level) < this._levels.indexOf(this.level)) return;
+          const ts = new Date().toISOString().split('T')[1]?.slice(0, 12) || '00:00:00.000';
+          const prefix = `[${ts}] [${level}]`;
+          (console[level.toLowerCase()] || console.log).call(console, prefix, ...args);
+        },
+        debug(...a) { this._log('DEBUG', ...a); },
+        info(...a)  { this._log('INFO',  ...a); },
+        warn(...a)  { this._log('WARN',  ...a); },
+        error(...a) { this._log('ERROR', ...a); },
+      };
+
+      // ---------- DOM helpers ----------
+      const $  = (sel, el = document) => el.querySelector(sel);
+      const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
+      const by = (k) => (a, b) => ((a[k] ?? 1e12) - (b[k] ?? 1e12));
+      const norm = (s) => (s || '').toLowerCase().trim();
+
+      // ---------- Image fallbacks ----------
+      const FALL = {
+        protoss: 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22256%22 height=%22256%22><rect width=%22256%22 height=%22256%22 rx=%2224%22 fill=%22%232563eb%22/><circle cx=%22128%22 cy=%22128%22 r=%2276%22 fill=%22white%22 opacity=%220.2%22/><path d=%22M128 56c36 0 64 28 64 64s-28 64-64 64-64-28-64-64 28-64 64-64zm0 26c-21 0-38 17-38 38s17 38 38 38 38-17 38-38-17-38-38-38z%22 fill=%22white%22 opacity=%220.75%22/></svg>',
+        terran:  'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22256%22 height=%22256%22><rect width=%22256%22 height=%22256%22 rx=%2224%22 fill=%22%23ef4444%22/><circle cx=%22128%22 cy=%22128%22 r=%2276%22 fill=%22white%22 opacity=%220.2%22/><path d=%22M128 56c36 0 64 28 64 64s-28 64-64 64-64-28-64-64 28-64 64-64zm0 26c-21 0-38 17-38 38s17 38 38 38 38-17 38-38-17-38-38-38z%22 fill=%22white%22 opacity=%220.75%22/></svg>',
+        zerg:    'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22256%22 height=%22256%22><rect width=%22256%22 height=%22256%22 rx=%2224%22 fill=%22%236d28d9%22/><circle cx=%22128%22 cy=%22128%22 r=%2276%22 fill=%22white%22 opacity=%220.2%22/><path d=%22M128 56c36 0 64 28 64 64s-28 64-64 64-64-28-64-64 28-64 64-64zm0 26c-21 0-38 17-38 38s17 38 38 38 38-17 38-38-17-38-38-38z%22 fill=%22white%22 opacity=%220.75%22/></svg>',
+        neutral: 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22256%22 height=%22256%22><rect width=%22256%22 height=%22256%22 rx=%2224%22 fill=%22%23334155%22/></svg>',
+      };
+
+      // ---------- State ----------
+      const state = {
+        data: null,          // raw JSON: {unit:{race:{name:obj}}, building:{...}, upgrade:{...}, extras:{...}}
+        norm: null,          // normalized analytic structure
+        ACTION_CONFIG: null, // future build-order optimizer input
+        race: 'protoss',
+        section: 'units',
+        search: '',
+        sortKey: '',
+        imageRoot: '',
+        build: [],           // current build order
+        idMap: new Map(),    // name -> card element
+        broken: new Set(),   // broken image URLs
+      };
+
+      // Simple 10-step “theory” templates per race
+      const AUTO_TEMPLATES = {
+        protoss: [
+          'nexus', 'probe', 'probe', 'pylon', 'gateway',
+          'zealot', 'zealot', 'cybernetics core', 'stalker', 'stalker',
+        ],
+        terran: [
+          'command center', 'scv', 'scv', 'supply depot', 'barracks',
+          'marine', 'marine', 'refinery', 'factory', 'starport',
+        ],
+        zerg: [
+          'hatchery', 'drone', 'drone', 'overlord', 'spawning pool',
+          'queen', 'zergling', 'zergling', 'roach warren', 'roach',
+        ],
+      };
+
+      // ---------- Status toast ----------
+      let statusTimeout;
+      function showStatus(message, kind = 'info', ms = 2500) {
+        const el = $('#status-message');
+        if (!el) return;
+        clearTimeout(statusTimeout);
+        el.textContent = message;
+        el.className = 'text-sm';
+        const bg = kind === 'success'
+          ? 'bg-green-600'
+          : kind === 'error'
+          ? 'bg-red-600'
+          : 'bg-blue-500';
+        el.classList.add(bg, 'text-white');
+        el.classList.add('show');
+        el.classList.remove('hide');
+        statusTimeout = setTimeout(() => {
+          el.classList.add('hide');
+          el.classList.remove('show');
+        }, ms);
+      }
+
+      // ---------- Theme ----------
+      $('#themeToggle')?.addEventListener('click', () => {
+        const html = document.documentElement;
+        const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+      });
+
+      $('#darkModeToggle')?.addEventListener('click', () => {
+        const html = document.documentElement;
+        const next = html.classList.contains('dark')
+          ? (html.classList.remove('dark'), 'off')
+          : (html.classList.add('dark'), 'on');
+        Logger.info('Dark mode', next);
+      });
+
+      // ---------- Image path helpers ----------
+      function joinPath(prefix, p) {
+        const a = (prefix || '').replace(/\\/g, '/').replace(/\/+$/, '');
+        let b = (p || '').replace(/\\/g, '/').replace(/^\/+/, '');
+        const joined = a ? `${a}/${b}` : b;
+        return joined
+          .split('/')
+          .map(seg => {
+            if (!seg) return seg;
+            try {
+              return encodeURIComponent(decodeURIComponent(seg));
+            } catch {
+              return encodeURIComponent(seg);
+            }
+          })
+          .join('/');
+      }
+
+      function tryAlternateExt(imgEl, origSrc) {
+        const i = origSrc.lastIndexOf('.');
+        if (i <= 0) return false;
+        const base = origSrc.slice(0, i);
+        const ext  = origSrc.slice(i + 1).toLowerCase();
+        const alt =
+          ext === 'jpg' || ext === 'jpeg'
+            ? `${base}.png`
+            : ext === 'png'
+            ? `${base}.jpg`
+            : null;
+        if (!alt) return false;
+        const test = new Image();
+        test.onload = () => { imgEl.src = alt; };
+        test.onerror = () => {
+          imgEl.src = FALL[state.race] || FALL.neutral;
+          noteBroken(alt);
+        };
+        test.src = alt;
+        return true;
+      }
+
+      function imageOrFallback(item) {
+        const src = item?.image || '';
+        if (!src) return FALL[state.race] || FALL.neutral;
+        if (/^(https?:)?\/\//i.test(src) || src.startsWith('data:')) return src;
+        return joinPath(state.imageRoot, src);
+      }
+
+      function noteBroken(src) {
+        if (!state.broken.has(src)) {
+          state.broken.add(src);
+          const banner = $('#brokenBanner');
+          const count  = $('#brokenCount');
+          if (banner && count) {
+            count.textContent = String(state.broken.size);
+            banner.classList.remove('hidden');
+          }
+        }
+      }
+
+      $('#copyBroken')?.addEventListener('click', () => {
+        navigator.clipboard.writeText([...state.broken].join('\n') || 'No broken images logged.');
+        showStatus('Broken image list copied', 'success');
+      });
+
+      // ---------- Drag & Drop + File Input ----------
+      const drop           = $('#drop-overlay');
+      const fileInput      = $('#fileInput');
+      const fileInputHidden = $('#json-file-input');
+
+      function handleFile(f) {
+        if (!f) {
+          Logger.warn('No file');
+          return;
+        }
+        Logger.info('Loading file', f.name, f.type, f.size);
+        showStatus('Parsing JSON…');
+        const reader = new FileReader();
+        reader.onload = e => {
+          try {
+            const raw = JSON.parse(e.target.result);
+            Logger.info('JSON parsed');
+            if (processSC2Data(raw)) {
+              state.data = raw;
+              renderAll();
+              showStatus('Game data loaded', 'success');
+            } else {
+              showStatus('Game data invalid (see console)', 'error', 4000);
+            }
+          } catch (err) {
+            Logger.error('JSON parse error', err);
+            showStatus('Invalid JSON file', 'error', 4000);
+          }
+        };
+        reader.onerror = err => {
+          Logger.error('File read error', err);
+          showStatus('File read error', 'error', 4000);
+        };
+        reader.readAsText(f);
+      }
+
+      window.addEventListener('dragenter', e => {
+        e.preventDefault();
+        drop?.classList.add('visible');
+      });
+      window.addEventListener('dragover', e => {
+        e.preventDefault();
+      });
+      window.addEventListener('dragleave', e => {
+        if (e.target === document) {
+          drop?.classList.remove('visible');
+        }
+      });
+      window.addEventListener('drop', e => {
+        e.preventDefault();
+        drop?.classList.remove('visible');
+        const f = e.dataTransfer?.files?.[0];
+        if (f) handleFile(f);
+      });
+
+      fileInput?.addEventListener('change', e => {
+        const f = e.target.files?.[0];
+        if (f) handleFile(f);
+        e.target.value = null;
+      });
+
+      fileInputHidden?.addEventListener('change', e => {
+        const f = e.target.files?.[0];
+        if (f) handleFile(f);
+        e.target.value = null;
+      });
+
+      // ---------- Image root ----------
+      const imgRootInput = $('#imgRoot');
+      imgRootInput?.addEventListener('change', () => {
+        state.imageRoot = imgRootInput.value.trim();
+        renderGrid();
+        renderExtras();
+      });
+
+      // ---------- processSC2Data: enforce schema + normalize ----------
+      function processSC2Data(raw) {
+        try {
+          if (!raw || typeof raw !== 'object') {
+            throw new Error('Root is not an object');
+          }
+
+          const requiredTop = ['unit', 'building', 'upgrade'];
+          const missingTop = requiredTop.filter(k => !(k in raw));
+          if (missingTop.length) {
+            Logger.warn('Top-level sections missing:', missingTop);
+          }
+
+          const normStruct = { units: {}, buildings: {}, upgrades: {} };
+          const races = ['protoss', 'terran', 'zerg'];
+
+          const toArr = x => (Array.isArray(x) ? x : x ? [x] : []);
+          const capWords = s =>
+            (s || '')
+              .split(' ')
+              .map(w => (w ? w[0].toUpperCase() + w.slice(1) : w))
+              .join(' ');
+
+          // Units
+          for (const race of races) {
+            const raceObj = raw.unit?.[race] || {};
+            normStruct.units[race] = {};
+            for (const [name, obj] of Object.entries(raceObj)) {
+              normStruct.units[race][name] = {
+                id: obj.no ?? name,
+                name: capWords(name),
+                race,
+                kind: 'unit',
+                cost: {
+                  mineral: Number.isFinite(obj.mineral) ? obj.mineral : 0,
+                  gas: Number.isFinite(obj.gas) ? obj.gas : 0,
+                },
+                supply: {
+                  required: Number.isFinite(obj.supply) ? obj.supply : 0,
+                  provided: Number.isFinite(obj.supplyoffer) ? obj.supplyoffer : 0,
+                },
+                build_time: Number.isFinite(obj.buildtime) ? obj.buildtime : 0,
+                built_from: obj.buildfrom || null,
+                tech_tree: {
+                  requires: toArr(obj.required),
+                  unlocks: [],
+                },
+                image: obj.image || null,
+              };
+            }
+          }
+
+          // Buildings
+          for (const race of races) {
+            const raceObj = raw.building?.[race] || {};
+            normStruct.buildings[race] = {};
+            for (const [name, obj] of Object.entries(raceObj)) {
+              normStruct.buildings[race][name] = {
+                id: obj.no ?? name,
+                name: capWords(name),
+                race,
+                kind: 'building',
+                cost: {
+                  mineral: Number.isFinite(obj.mineral) ? obj.mineral : 0,
+                  gas: Number.isFinite(obj.gas) ? obj.gas : 0,
+                },
+                supply: {
+                  required: 0,
+                  provided: Number.isFinite(obj.supplyoffer) ? obj.supplyoffer : 0,
+                },
+                build_time: Number.isFinite(obj.buildtime) ? obj.buildtime : 0,
+                built_from:
+                  race === 'zerg' && name !== 'hatchery' && name !== 'extractor'
+                    ? 'drone'
+                    : 'worker',
+                tech_tree: {
+                  requires: toArr(obj.required),
+                  unlocks: [],
+                },
+                image: obj.image || null,
+              };
+            }
+          }
+
+          // Upgrades
+          for (const race of races) {
+            const raceObj = raw.upgrade?.[race] || {};
+            normStruct.upgrades[race] = {};
+            for (const [name, obj] of Object.entries(raceObj)) {
+              normStruct.upgrades[race][name] = {
+                id: name,
+                name: capWords(name),
+                race,
+                kind: 'upgrade',
+                cost: {
+                  mineral: Number.isFinite(obj.mineral) ? obj.mineral : 0,
+                  gas: Number.isFinite(obj.gas) ? obj.gas : 0,
+                },
+                research_time: Number.isFinite(obj.researchtime) ? obj.researchtime : 0,
+                researched_at: obj.researchedat || null,
+                tech_tree: {
+                  requires: toArr(obj.required),
+                  unlocks: [],
+                },
+                image: obj.image || null,
+              };
+            }
+          }
+
+          // ACTION_CONFIG placeholder (future optimizer)
+          const ACTION_CONFIG = {};
+          for (const race of races) {
+            ACTION_CONFIG[race] = {};
+            for (const [n, u] of Object.entries(normStruct.units[race] || {})) {
+              const key = n.replace(/ /g, '_');
+              ACTION_CONFIG[race][key] = {
+                minerals: u.cost.mineral,
+                gas: u.cost.gas,
+                supply: u.supply.required,
+                time: u.build_time,
+                type: 'unit',
+                requires: (u.tech_tree.requires[0] || '')?.replace(/ /g, '_') || undefined,
+                produces: u.built_from?.replace(/ /g, '_'),
+              };
+            }
+            for (const [n, b] of Object.entries(normStruct.buildings[race] || {})) {
+              const key = n.replace(/ /g, '_');
+              ACTION_CONFIG[race][key] = {
+                minerals: b.cost.mineral,
+                gas: b.cost.gas,
+                supply_provided: b.supply.provided,
+                time: b.build_time,
+                type: 'building',
+                requires: (b.tech_tree.requires[0] || '')?.replace(/ /g, '_') || undefined,
+              };
+            }
+          }
+
+          state.norm = normStruct;
+          state.ACTION_CONFIG = ACTION_CONFIG;
+
+          updateSchemaSummary(raw);
+
+          Logger.info('processSC2Data complete');
+          return true;
+        } catch (err) {
+          Logger.error('processSC2Data error', err);
+          return false;
+        }
+      }
+
+      function updateSchemaSummary(raw) {
+        const el = $('#schemaSummary');
+        if (!el || !raw) {
+          if (el) el.textContent = 'No JSON loaded.';
+          return;
+        }
+        const races = ['protoss', 'terran', 'zerg'];
+        const sections = ['unit', 'building', 'upgrade'];
+        const parts = [];
+        for (const r of races) {
+          const counts = sections.map(sec => {
+            const obj = raw[sec]?.[r] || {};
+            return Object.keys(obj).length;
+          });
+          parts.push(
+            `${r[0].toUpperCase() + r.slice(1)}: U${counts[0]} / B${counts[1]} / Upg${counts[2]}`
+          );
+        }
+        el.textContent = parts.join('  ·  ');
+      }
+
+      // ---------- Race/Section Tabs ----------
+      $$('.race-tab').forEach(btn =>
+        btn.addEventListener('click', () => {
+          state.race = btn.dataset.race;
+          renderAll();
+        })
+      );
+
+      $$('.section-tab').forEach(btn =>
+        btn.addEventListener('click', () => {
+          state.section = btn.dataset.section;
+          renderAll();
+        })
+      );
+
+      // ---------- Search/Sort ----------
+      $('#searchInput')?.addEventListener('input', () => {
+        state.search = $('#searchInput').value;
+        renderGrid();
+      });
+
+      $('#sortSelect')?.addEventListener('change', () => {
+        state.sortKey = $('#sortSelect').value;
+        renderGrid();
+      });
+
+      // ---------- Build Controls ----------
+      $('#clearBuild')?.addEventListener('click', () => {
+        state.build = [];
+        renderBuild();
+      });
+
+      $('#copyText')?.addEventListener('click', () => {
+        const text = state.build
+          .map((b, i) => `${i + 1}. ${b.kind}: ${b.name}`)
+          .join('\n');
+        navigator.clipboard.writeText(text);
+        showStatus('Build copied as text', 'success');
+      });
+
+      $('#copyJson')?.addEventListener('click', () => {
+        navigator.clipboard.writeText(JSON.stringify(state.build, null, 2));
+        showStatus('Build copied as JSON', 'success');
+      });
+
+      $('#exportBuild')?.addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify(state.build, null, 2)], {
+          type: 'application/json',
+        });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'build-order.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+
+      $('#autoBuild')?.addEventListener('click', () => {
+        if (!state.data) {
+          showStatus('Load sc2units.json first', 'error', 3000);
+          return;
+        }
+        const names = AUTO_TEMPLATES[state.race] || [];
+        if (!names.length) {
+          showStatus('No template defined for this race', 'error', 3000);
+          return;
+        }
+        state.build = [];
+        names.forEach(name => {
+          const ent = findEntityByName(name);
+          if (ent) {
+            tryAddToBuild(ent);
+          } else {
+            Logger.warn('Template entity not found:', state.race, name);
+          }
+        });
+        renderBuild();
+        showStatus('Auto build generated', 'success');
+      });
+
+      // ---------- Data Accessors ----------
+      function flatten(section) {
+        const key = section === 'units' ? 'unit' : section === 'buildings' ? 'building' : 'upgrade';
+        const raceData = state.data?.[key]?.[state.race] || {};
+        return Object.entries(raceData).map(([name, obj]) => ({
+          name,
+          kind: key,
+          mineral: Number.isFinite(obj.mineral) ? obj.mineral : 0,
+          gas: Number.isFinite(obj.gas) ? obj.gas : 0,
+          supply: Number.isFinite(obj.supply) ? obj.supply : 0,
+          buildtime: Number.isFinite(obj.buildtime) ? obj.buildtime : 0,
+          buildfrom: obj.buildfrom,
+          required: obj.required,
+          image: obj?.image || '',
+        }));
+      }
+
+      function getAll(section) {
+        let items = flatten(section);
+        if (state.search) {
+          const q = norm(state.search);
+          items = items.filter(it => norm(it.name).includes(q));
+        }
+        if (state.sortKey) items.sort(by(state.sortKey));
+        return items;
+      }
+
+      function reqList(item) {
+        const req = item.required ?? item.buildfrom ?? null;
+        if (!req) return [];
+        return Array.isArray(req) ? req.map(String) : [String(req)];
+      }
+
+      function findEntityByName(name) {
+        const n = norm(name);
+        const pools = [flatten('units'), flatten('buildings'), flatten('upgrades')];
+        for (const pool of pools) {
+          const hit = pool.find(x => norm(x.name) === n);
+          if (hit) return hit;
+        }
+        return null;
+      }
+
+      function buildTree(item, seen = new Set()) {
+        const key = `${item.kind}:${norm(item.name)}`;
+        if (seen.has(key)) return { name: item.name, children: [] };
+        seen.add(key);
+        const children = [];
+        for (const r of reqList(item)) {
+          const ent = findEntityByName(r) || { name: r, kind: 'unknown' };
+          children.push(buildTree(ent, seen));
+        }
+        return { name: item.name, children };
+      }
+
+      function treeToHtml(node, depth = 0) {
+        const indent = '&nbsp;'.repeat(depth * 2);
+        const id     = `jump-${CSS.escape(norm(node.name))}`;
+        const link   = `<a href="#${id}" class="underline decoration-dotted">${node.name}</a>`;
+        if (!node.children?.length) {
+          return `<div class="flex items-center gap-2">${indent}${link}</div>`;
+        }
+        return (
+          `<div class="flex items-center gap-2">${indent}${link}</div>` +
+          node.children.map(ch => treeToHtml(ch, depth + 1)).join('')
+        );
+      }
+
+      // ---------- Rendering ----------
+      function applyRaceTheme() {
+        $('#raceBadge').textContent =
+          state.race[0].toUpperCase() + state.race.slice(1);
+        const dot = $('#raceDot');
+        const m = {
+          protoss: 'bg-protoss-500',
+          terran:  'bg-terran-500',
+          zerg:    'bg-zerg-500',
+        };
+        dot.className = `w-3 h-3 rounded-full ${m[state.race] || 'bg-steel'}`;
+
+        $$('.race-tab').forEach(b => {
+          const active = b.dataset.race === state.race;
+          b.classList.toggle('bg-slate-900', active);
+          b.classList.toggle('text-white', active);
+          b.classList.toggle('dark:bg-slate-100', active);
+          b.classList.toggle('dark:text-slate-900', active);
+        });
+
+        $$('.section-tab').forEach(b => {
+          const active = b.dataset.section === state.section;
+          b.classList.toggle('bg-slate-900', active);
+          b.classList.toggle('text-white', active);
+          b.classList.toggle('dark:bg-slate-100', active);
+          b.classList.toggle('dark:text-slate-900', active);
+        });
+      }
+
+      function makeReqChip(name) {
+        const span = document.createElement('button');
+        span.className =
+          'text-[11px] px-2 py-0.5 rounded-full border hover:bg-slate-100 dark:hover:bg-slate-800 inline-flex items-center gap-1';
+        const pic = document.createElement('img');
+        pic.loading  = 'lazy';
+        pic.className = 'w-4 h-4 rounded object-cover';
+        const ent = findEntityByName(name);
+        const src = ent ? imageOrFallback(ent) : FALL[state.race] || FALL.neutral;
+        pic.src = src;
+        pic.alt = `${name} icon`;
+        pic.onerror = () => {
+          noteBroken(pic.src);
+          if (!tryAlternateExt(pic, pic.src)) {
+            pic.src = FALL[state.race] || FALL.neutral;
+          }
+        };
+        span.appendChild(pic);
+        span.appendChild(document.createTextNode(name));
+        span.addEventListener('click', () => jumpToEntity(name));
+        return span;
+      }
+
+      function renderGrid() {
+        const wrap = $('#grid');
+        wrap.innerHTML = '';
+        const list = getAll(state.section);
+        const tpl = $('#cardTpl');
+
+        list.forEach(item => {
+          const node = tpl.content.cloneNode(true);
+          const art  = node.querySelector('article');
+          const img  = node.querySelector('.card-img');
+          const title = node.querySelector('.title');
+          const addBtn = node.querySelector('.addBtn');
+          const reqs   = node.querySelector('.reqs');
+          const techTree   = node.querySelector('.techTree');
+          const toggleTree = node.querySelector('.toggleTree');
+          const jumpDeps   = node.querySelector('.jumpDeps');
+          const openLightbox = node.querySelector('.openLightbox');
+
+          const anchorId = `jump-${norm(item.name)}`;
+          art.id = anchorId;
+          img.src = imageOrFallback(item);
+          img.alt = `${item.name} image`;
+          img.onerror = () => {
+            noteBroken(img.src);
+            if (!tryAlternateExt(img, img.src)) {
+              img.src = FALL[state.race] || FALL.neutral;
+            }
+          };
+          title.textContent = item.name;
+
+          ['mineral', 'gas', 'supply', 'buildtime'].forEach(k => {
+            const span = node.querySelector(`[data-key="${k}"]`);
+            const val  = item[k];
+            span.textContent =
+              val === 0 || val === undefined || val === null ? '-' : String(val);
+          });
+
+          const reqsArr = reqList(item);
+          if (!reqsArr.length) {
+            const none = document.createElement('span');
+            none.className =
+              'text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500';
+            none.textContent = 'None';
+            reqs.appendChild(none);
+          } else {
+            reqsArr.forEach(r => reqs.appendChild(makeReqChip(r)));
+          }
+
+          const tree = buildTree(item);
+          techTree.innerHTML = treeToHtml(tree);
+          toggleTree.addEventListener('click', () =>
+            techTree.classList.toggle('hidden')
+          );
+          jumpDeps.addEventListener('click', () => {
+            reqsArr.forEach(jumpToEntity);
+          });
+
+          openLightbox.addEventListener('click', () => {
+            const box   = $('#lightbox');
+            const lbImg = $('#lightboxImg');
+            lbImg.src = img.src;
+            lbImg.alt = `${item.name} enlarged image`;
+            box.classList.remove('hidden');
+            box.classList.add('flex');
+          });
+
+          addBtn.addEventListener('click', () => tryAddToBuild(item));
+
+          wrap.appendChild(node);
+          state.idMap.set(norm(item.name), art);
+        });
+
+        const lb = $('#lightbox');
+        lb.addEventListener('click', () => {
+          lb.classList.add('hidden');
+          lb.classList.remove('flex');
+        });
+      }
+
+      function renderExtras() {
+        const wrap = $('#extrasWrap');
+        wrap.innerHTML = '';
+        const extras = state.data?.extras?.[state.race] || {};
+        ['units', 'buildings', 'upgrades'].forEach(sec => {
+          if (!extras[sec]) return;
+          const items = Object.entries(extras[sec]).map(([name, image]) => ({
+            name,
+            image,
+          }));
+          const card = document.createElement('div');
+          card.className = 'card rounded-xl border shadow-sm p-3';
+          card.innerHTML = `<div class="font-semibold mb-2 capitalize">${sec}</div>`;
+          const grid = document.createElement('div');
+          grid.className = 'grid grid-cols-2 gap-2';
+          items.forEach(({ name, image }) => {
+            const row = document.createElement('div');
+            row.className =
+              'flex gap-2 items-center p-2 rounded border bg-slate-50/50 dark:bg-slate-900/40';
+            const pic = document.createElement('img');
+            pic.loading  = 'lazy';
+            pic.className = 'w-8 h-8 rounded object-cover';
+            const src = image
+              ? joinPath(state.imageRoot, image)
+              : FALL[state.race] || FALL.neutral;
+            pic.src = src;
+            pic.alt = `${name} asset`;
+            pic.onerror = () => {
+              noteBroken(pic.src);
+              if (!tryAlternateExt(pic, pic.src)) {
+                pic.src = FALL[state.race] || FALL.neutral;
+              }
+            };
+            const label = document.createElement('div');
+            label.className = 'text-sm truncate';
+            label.title = name;
+            label.textContent = name;
+            row.appendChild(pic);
+            row.appendChild(label);
+            grid.appendChild(row);
+          });
+          card.appendChild(grid);
+          wrap.appendChild(card);
+        });
+      }
+
+      // ---------- Build Order ----------
+      function missingPrereqs(item, build) {
+        const have = new Set(build.filter(b => !b.locked).map(b => norm(b.name)));
+        const starters = {
+          protoss: ['nexus', 'pylon'],
+          terran:  ['command center', 'supply depot'],
+          zerg:    ['hatchery', 'overlord'],
+        };
+        starters[state.race]?.forEach(s => have.add(norm(s)));
+        const reqs = reqList(item).map(norm);
+        return reqs.filter(r => !have.has(r));
+      }
+
+      function tryAddToBuild(item) {
+        const missing = missingPrereqs(item, state.build);
+        addBuildEntry(item, missing.length > 0, missing);
+        renderBuild(true);
+      }
+
+      function addBuildEntry(item, locked, missing) {
+        state.build.push({
+          name: item.name,
+          kind: item.kind,
+          mineral: item.mineral ?? 0,
+          gas: item.gas ?? 0,
+          supply: item.supply ?? 0,
+          buildtime: item.buildtime ?? 0,
+          image: imageOrFallback(item),
+          locked: !!locked,
+          missing: missing || [],
+        });
+      }
+
+      function renderBuild(animate = false) {
+        const list = $('#buildList');
+        list.innerHTML = '';
+        let tm = 0, tg = 0, ts = 0;
+
+        state.build.forEach((b, idx) => {
+          tm += b.mineral || 0;
+          tg += b.gas || 0;
+          ts += b.supply || 0;
+
+          const li = document.createElement('li');
+          li.className =
+            'flex items-center gap-2 p-2 rounded border bg-white/60 dark:bg-slate-900/50';
+          if (animate && idx === state.build.length - 1) li.classList.add('fade-in');
+          li.draggable = true;
+          li.addEventListener('dragstart', e =>
+            e.dataTransfer.setData('text/plain', String(idx))
+          );
+          li.addEventListener('dragover', e => e.preventDefault());
+          li.addEventListener('drop', e => {
+            e.preventDefault();
+            const from = Number(e.dataTransfer.getData('text/plain'));
+            const to   = idx;
+            if (!Number.isNaN(from) && from !== to) {
+              const [m] = state.build.splice(from, 1);
+              state.build.splice(to, 0, m);
+              renderBuild();
+            }
+          });
+
+          const img = document.createElement('img');
+          img.loading  = 'lazy';
+          img.className = 'w-8 h-8 rounded object-cover';
+          img.src = b.image || FALL[state.race] || FALL.neutral;
+          img.onerror = () => {
+            noteBroken(img.src);
+            if (!tryAlternateExt(img, img.src)) {
+              img.src = FALL[state.race] || FALL.neutral;
+            }
+          };
+
+          const tag = document.createElement('span');
+          tag.className = 'text-[11px] px-2 py-0.5 rounded-full border';
+          tag.textContent = b.kind;
+
+          const name = document.createElement('div');
+          name.className = 'text-sm font-medium truncate';
+          name.textContent = b.name;
+
+          const reqWrap = document.createElement('div');
+          reqWrap.className =
+            'flex flex-wrap gap-1 text-[10px] text-slate-500';
+
+          if (b.missing?.length) {
+            const t = document.createElement('span');
+            t.textContent = 'Missing:';
+            reqWrap.appendChild(t);
+            b.missing.forEach(m => {
+              const chip = document.createElement('span');
+              chip.className =
+                'px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200';
+              chip.textContent = m;
+              reqWrap.appendChild(chip);
+            });
+          }
+
+          const del = document.createElement('button');
+          del.className = 'ml-auto text-xs px-2 py-1 rounded border';
+          del.textContent = 'Remove';
+          del.addEventListener('click', () => {
+            state.build.splice(idx, 1);
+            renderBuild();
+          });
+
+          li.appendChild(img);
+          li.appendChild(tag);
+          li.appendChild(name);
+          if (b.locked) {
+            const badge = document.createElement('span');
+            badge.className =
+              'text-[11px] ml-2 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200';
+            badge.textContent = 'Locked';
+            li.appendChild(badge);
+          }
+          li.appendChild(reqWrap);
+          li.appendChild(del);
+          list.appendChild(li);
+        });
+
+        $('#totMineral').textContent = tm;
+        $('#totGas').textContent     = tg;
+        $('#totSupply').textContent  = ts;
+
+        const locked = state.build.filter(b => b.locked);
+        $('#buildWarnings').textContent = locked.length
+          ? `${locked.length} step(s) are locked due to unmet prerequisites.`
+          : '';
+
+        renderCharts();
+      }
+
+      // ---------- D3 Mini-Charts ----------
+      function renderCharts() {
+        // Supply vs Step
+        const supSVG = d3.select('#chartSupply');
+        supSVG.selectAll('*').remove();
+        const dataS = state.build.map((b, i) => ({ x: i + 1, y: b.supply || 0 }));
+        const w = supSVG.node()?.clientWidth || 300;
+        const h = supSVG.node()?.clientHeight || 120;
+        const m = { t: 6, r: 6, b: 18, l: 24 };
+
+        const x = d3
+          .scaleLinear()
+          .domain([1, Math.max(1, dataS.length || 1)])
+          .range([m.l, w - m.r]);
+        const totalSupply = d3.sum(dataS, d => d.y) || 0;
+        const y = d3
+          .scaleLinear()
+          .domain([0, Math.max(2, totalSupply)])
+          .nice()
+          .range([h - m.b, m.t]);
+
+        supSVG
+          .append('g')
+          .attr('class', 'd3-axis')
+          .attr('transform', `translate(0,${h - m.b})`)
+          .call(d3.axisBottom(x).ticks(5));
+
+        supSVG
+          .append('g')
+          .attr('class', 'd3-axis')
+          .attr('transform', `translate(${m.l},0)`)
+          .call(d3.axisLeft(y).ticks(4));
+
+        const cum = dataS.map((_, i) => ({
+          x: i + 1,
+          y: d3.sum(dataS.slice(0, i + 1), d => d.y),
+        }));
+
+        supSVG
+          .append('path')
+          .attr(
+            'd',
+            d3
+              .line()
+              .x(d => x(d.x))
+              .y(d => y(d.y))(cum)
+          )
+          .attr('fill', 'none')
+          .attr('stroke', 'currentColor')
+          .attr('stroke-width', 2);
+
+        // Mineral & Gas cumulative
+        const resSVG = d3.select('#chartRes');
+        resSVG.selectAll('*').remove();
+        const dataM = state.build.map((b, i) => ({ x: i + 1, y: b.mineral || 0 }));
+        const dataG = state.build.map((b, i) => ({ x: i + 1, y: b.gas || 0 }));
+
+        const xm = d3
+          .scaleLinear()
+          .domain([1, Math.max(1, dataM.length || 1)])
+          .range([m.l, (resSVG.node()?.clientWidth || w) - m.r]);
+
+        const ymax = Math.max(
+          2,
+          d3.sum(dataM, d => d.y) + d3.sum(dataG, d => d.y)
+        );
+
+        const yr = d3
+          .scaleLinear()
+          .domain([0, ymax])
+          .nice()
+          .range([h - m.b, m.t]);
+
+        resSVG
+          .append('g')
+          .attr('class', 'd3-axis')
+          .attr('transform', `translate(0,${h - m.b})`)
+          .call(d3.axisBottom(xm).ticks(5));
+
+        resSVG
+          .append('g')
+          .attr('class', 'd3-axis')
+          .attr('transform', `translate(${m.l},0)`)
+          .call(d3.axisLeft(yr).ticks(4));
+
+        const cumM = dataM.map((_, i) => ({
+          x: i + 1,
+          y: d3.sum(dataM.slice(0, i + 1), d => d.y),
+        }));
+        const cumG = dataG.map((_, i) => ({
+          x: i + 1,
+          y: d3.sum(dataG.slice(0, i + 1), d => d.y),
+        }));
+
+        resSVG
+          .append('path')
+          .attr(
+            'd',
+            d3
+              .line()
+              .x(d => xm(d.x))
+              .y(d => yr(d.y))(cumM)
+          )
+          .attr('fill', 'none')
+          .attr('stroke', 'currentColor')
+          .attr('stroke-width', 2)
+          .attr('opacity', 0.9);
+
+        resSVG
+          .append('path')
+          .attr(
+            'd',
+            d3
+              .line()
+              .x(d => xm(d.x))
+              .y(d => yr(d.y))(cumG)
+          )
+          .attr('fill', 'none')
+          .attr('stroke', 'currentColor')
+          .attr('stroke-width', 2)
+          .attr('opacity', 0.6);
+      }
+
+      // ---------- Navigation ----------
+      function jumpToEntity(name) {
+        const id = `jump-${norm(name)}`;
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.add('ring-2', 'ring-offset-2', 'ring-blue-400');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(
+          () =>
+            el.classList.remove(
+              'ring-2',
+              'ring-offset-2',
+              'ring-blue-400'
+            ),
+          1200
+        );
+      }
+
+      // ---------- Global render ----------
+      function renderAll() {
+        applyRaceTheme();
+        state.idMap.clear();
+        state.broken.clear();
+        $('#brokenBanner')?.classList.add('hidden');
+        renderGrid();
+        renderExtras();
+        renderBuild();
+      }
+
+      // ---------- Boot ----------
+      (function boot() {
+        try {
+          const el  = document.getElementById('sc2-data');
+          const txt = el?.textContent?.trim();
+          if (txt && txt.startsWith('{')) {
+            const raw = JSON.parse(txt);
+            if (processSC2Data(raw)) {
+              state.data = raw;
+            }
+          }
+        } catch (err) {
+          Logger.warn('Embedded JSON boot failed', err);
+        }
+        renderAll();
+      })();
+    })();
+  </script>
+
+</body>
+</html>

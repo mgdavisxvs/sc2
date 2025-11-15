@@ -1,0 +1,814 @@
+{
+  "unit": {
+    "protoss": {
+      "probe": {
+        "no": 0,
+        "race": "protoss",
+        "mineral": 50,
+        "gas": 0,
+        "supply": 1,
+        "buildtime": 17,
+        "buildfrom": "nexus",
+        "image": "jpgFiles/protoss/units/probe.jpg"
+      },
+      "zealot": {
+        "no": 1,
+        "race": "protoss",
+        "mineral": 100,
+        "gas": 0,
+        "supply": 2,
+        "buildtime": 38,
+        "buildfrom": "gateway",
+        "image": "jpgFiles/protoss/units/zealot.jpg",
+        "required": "gateway"
+      },
+      "adept": {
+        "image": "jpgFiles/protoss/units/adept.jpg",
+        "required": "gateway"
+      },
+      "archon": {
+        "image": "jpgFiles/protoss/units/archon.jpg"
+      },
+      "archon_d+d": {
+        "image": "jpgFiles/protoss/units/archon_d+d.jpg"
+      },
+      "archon_d+h": {
+        "image": "jpgFiles/protoss/units/archon_d+h.jpg"
+      },
+      "carrier": {
+        "image": "jpgFiles/protoss/units/carrier.jpg",
+        "required": "stargate"
+      },
+      "colossus": {
+        "image": "jpgFiles/protoss/units/colossus.jpg",
+        "required": "robotics bay"
+      },
+      "dark templar": {
+        "image": "jpgFiles/protoss/units/dark templar.jpg",
+        "required": "dark shrine"
+      },
+      "disruptor": {
+        "image": "jpgFiles/protoss/units/disruptor.jpg"
+      },
+      "high templar": {
+        "image": "jpgFiles/protoss/units/high templar.jpg",
+        "required": "templar archives"
+      },
+      "immortal": {
+        "image": "jpgFiles/protoss/units/immortal.jpg",
+        "required": "robotics facility"
+      },
+      "mothership core": {
+        "image": "jpgFiles/protoss/units/mothership core.jpg",
+        "required": "nexus"
+      },
+      "mothership": {
+        "image": "jpgFiles/protoss/units/mothership.jpg"
+      },
+      "observer": {
+        "image": "jpgFiles/protoss/units/observer.jpg",
+        "required": "robotics facility"
+      },
+      "oracle": {
+        "image": "jpgFiles/protoss/units/oracle.jpg"
+      },
+      "phoenix": {
+        "image": "jpgFiles/protoss/units/phoenix.jpg",
+        "required": "stargate"
+      },
+      "sentry": {
+        "image": "jpgFiles/protoss/units/sentry.jpg",
+        "required": "gateway"
+      },
+      "stalker": {
+        "image": "jpgFiles/protoss/units/stalker.jpg",
+        "required": "cybernetics core"
+      },
+      "tempest": {
+        "image": "jpgFiles/protoss/units/tempest.jpg",
+        "required": "stargate"
+      },
+      "void ray": {
+        "image": "jpgFiles/protoss/units/void ray.jpg",
+        "required": "stargate"
+      },
+      "warp adept": {
+        "image": "jpgFiles/protoss/units/warp adept.jpg"
+      },
+      "warp dark templar": {
+        "image": "jpgFiles/protoss/units/warp dark templar.jpg"
+      },
+      "warp high templar": {
+        "image": "jpgFiles/protoss/units/warp high templar.jpg"
+      },
+      "warp prism": {
+        "image": "jpgFiles/protoss/units/warp prism.jpg",
+        "required": "robotics facility"
+      },
+      "warp sentry": {
+        "image": "jpgFiles/protoss/units/warp sentry.jpg"
+      },
+      "warp stalker": {
+        "image": "jpgFiles/protoss/units/warp stalker.jpg"
+      },
+      "warp zealot": {
+        "image": "jpgFiles/protoss/units/warp zealot.jpg"
+      }
+    },
+    "terran": {
+      "scv": {
+        "no": 0,
+        "race": "terran",
+        "mineral": 50,
+        "gas": 0,
+        "supply": 1,
+        "buildtime": 12,
+        "buildfrom": "command center",
+        "image": "jpgFiles/terran/units/SCV.jpg"
+      },
+      "mule": {
+        "image": "jpgFiles/terran/units/MULE.jpg"
+      },
+      "banshee": {
+        "image": "jpgFiles/terran/units/banshee.jpg"
+      },
+      "battlecruiser": {
+        "image": "jpgFiles/terran/units/battlecruiser.jpg"
+      },
+      "cyclone": {
+        "image": "jpgFiles/terran/units/cyclone.jpg",
+        "required": "factory"
+      },
+      "ghost": {
+        "image": "jpgFiles/terran/units/ghost.jpg"
+      },
+      "hellbat": {
+        "image": "jpgFiles/terran/units/hellbat.jpg"
+      },
+      "hellion": {
+        "image": "jpgFiles/terran/units/hellion.jpg"
+      },
+      "liberator": {
+        "image": "jpgFiles/terran/units/liberator.jpg",
+        "required": "starport"
+      },
+      "marauder": {
+        "image": "jpgFiles/terran/units/marauder.jpg",
+        "required": "barracks"
+      },
+      "marine": {
+        "image": "jpgFiles/terran/units/marine.jpg",
+        "required": "barracks"
+      },
+      "medivac": {
+        "image": "jpgFiles/terran/units/medivac.jpg",
+        "required": "starport"
+      },
+      "raven": {
+        "image": "jpgFiles/terran/units/raven.jpg"
+      },
+      "reaper": {
+        "image": "jpgFiles/terran/units/reaper.jpg",
+        "required": "barracks"
+      },
+      "siege tank": {
+        "image": "jpgFiles/terran/units/siege tank.jpg",
+        "required": [
+          "factory",
+          "tech lab"
+        ]
+      },
+      "thor": {
+        "image": "jpgFiles/terran/units/thor.jpg",
+        "required": "factory"
+      },
+      "viking": {
+        "image": "jpgFiles/terran/units/viking.jpg",
+        "required": "starport"
+      },
+      "widow mine": {
+        "image": "jpgFiles/terran/units/widow mine.jpg"
+      }
+    },
+    "zerg": {
+      "drone": {
+        "no": 0,
+        "race": "zerg",
+        "mineral": 50,
+        "gas": 0,
+        "supply": 1,
+        "buildtime": 12,
+        "buildfrom": "hatchery",
+        "image": "jpgFiles/zerg/units/drone.jpg"
+      },
+      "baneling": {
+        "image": "jpgFiles/zerg/units/baneling.jpg",
+        "required": "baneling nest"
+      },
+      "brood lord": {
+        "image": "jpgFiles/zerg/units/brood lord.jpg"
+      },
+      "corruptor": {
+        "image": "jpgFiles/zerg/units/corruptor.jpg"
+      },
+      "hydralisk": {
+        "image": "jpgFiles/zerg/units/hydralisk.jpg",
+        "required": "hydralisk den"
+      },
+      "infestor": {
+        "image": "jpgFiles/zerg/units/infestor.jpg"
+      },
+      "larva": {
+        "image": "jpgFiles/zerg/units/larva.jpg"
+      },
+      "lurker": {
+        "image": "jpgFiles/zerg/units/lurker.jpg",
+        "required": "lurker den"
+      },
+      "mutalisk": {
+        "image": "jpgFiles/zerg/units/mutalisk.jpg",
+        "required": "spire"
+      },
+      "overlord": {
+        "image": "jpgFiles/zerg/units/overlord.jpg"
+      },
+      "overseer": {
+        "image": "jpgFiles/zerg/units/overseer.jpg",
+        "required": "spire"
+      },
+      "queen": {
+        "image": "jpgFiles/zerg/units/queen.jpg"
+      },
+      "ravager": {
+        "image": "jpgFiles/zerg/units/ravager.jpg"
+      },
+      "roach": {
+        "image": "jpgFiles/zerg/units/roach.jpg",
+        "required": "roach warren"
+      },
+      "swarm host": {
+        "image": "jpgFiles/zerg/units/swarm host.jpg"
+      },
+      "ultralisk": {
+        "image": "jpgFiles/zerg/units/ultralisk.jpg",
+        "required": "ultralisk cavern"
+      },
+      "viper": {
+        "image": "jpgFiles/zerg/units/viper.jpg"
+      },
+      "zergling": {
+        "image": "jpgFiles/zerg/units/zergling.jpg",
+        "required": "spawning pool"
+      }
+    }
+  },
+  "building": {
+    "protoss": {
+      "nexus": {
+        "no": 0,
+        "race": "protoss",
+        "mineral": 400,
+        "gas": 0,
+        "buildtime": 100,
+        "supplyoffer": 15,
+        "image": "jpgFiles/protoss/buildings/nexus.jpg"
+      },
+      "assimilator": {
+        "image": "jpgFiles/protoss/buildings/assimilator.jpg"
+      },
+      "cybernetics core": {
+        "image": "jpgFiles/protoss/buildings/cybernetics core.jpg",
+        "required": "gateway"
+      },
+      "dark shrine": {
+        "image": "jpgFiles/protoss/buildings/dark shrine.jpg"
+      },
+      "fleet beacon": {
+        "image": "jpgFiles/protoss/buildings/fleet beacon.jpg"
+      },
+      "forge": {
+        "image": "jpgFiles/protoss/buildings/forge.jpg"
+      },
+      "gateway": {
+        "image": "jpgFiles/protoss/buildings/gateway.jpg"
+      },
+      "photon cannon": {
+        "image": "jpgFiles/protoss/buildings/photon cannon.jpg"
+      },
+      "pylon": {
+        "image": "jpgFiles/protoss/buildings/pylon.jpg"
+      },
+      "robotics bay": {
+        "image": "jpgFiles/protoss/buildings/robotics bay.jpg",
+        "required": "robotics facility"
+      },
+      "robotics facility": {
+        "image": "jpgFiles/protoss/buildings/robotics facility.jpg"
+      },
+      "stargate": {
+        "image": "jpgFiles/protoss/buildings/stargate.jpg"
+      },
+      "templar archives": {
+        "image": "jpgFiles/protoss/buildings/templar archives.jpg"
+      },
+      "twilight council": {
+        "image": "jpgFiles/protoss/buildings/twilight council.jpg"
+      },
+      "warp gate": {
+        "image": "jpgFiles/protoss/buildings/warp gate.jpg",
+        "required": "gateway"
+      }
+    },
+    "terran": {
+      "command center": {
+        "no": 0,
+        "race": "terran",
+        "mineral": 400,
+        "gas": 0,
+        "buildtime": 100,
+        "supplyoffer": 15,
+        "image": "jpgFiles/terran/buildings/command center.jpg"
+      },
+      "armory": {
+        "image": "jpgFiles/terran/buildings/armory.jpg"
+      },
+      "barracks": {
+        "image": "jpgFiles/terran/buildings/barracks.jpg"
+      },
+      "bunker": {
+        "image": "jpgFiles/terran/buildings/bunker.jpg"
+      },
+      "engineering bay": {
+        "image": "jpgFiles/terran/buildings/engineering bay.jpg"
+      },
+      "factory": {
+        "image": "jpgFiles/terran/buildings/factory.jpg"
+      },
+      "fusion core": {
+        "image": "jpgFiles/terran/buildings/fusion core.jpg"
+      },
+      "ghost academy": {
+        "image": "jpgFiles/terran/buildings/ghost academy.jpg"
+      },
+      "missile turret": {
+        "image": "jpgFiles/terran/buildings/missile turret.jpg"
+      },
+      "orbital command": {
+        "image": "jpgFiles/terran/buildings/orbital command.jpg"
+      },
+      "planetary fortress": {
+        "image": "jpgFiles/terran/buildings/planetary fortress.jpg"
+      },
+      "reactor": {
+        "image": "jpgFiles/terran/buildings/reactor.jpg"
+      },
+      "refinery": {
+        "image": "jpgFiles/terran/buildings/refinery.jpg"
+      },
+      "sensor tower": {
+        "image": "jpgFiles/terran/buildings/sensor tower.jpg"
+      },
+      "starport": {
+        "image": "jpgFiles/terran/buildings/starport.jpg"
+      },
+      "supply depot": {
+        "image": "jpgFiles/terran/buildings/supply depot.jpg"
+      },
+      "tech lab": {
+        "image": "jpgFiles/terran/buildings/tech lab.jpg"
+      }
+    },
+    "zerg": {
+      "hatchery": {
+        "no": 0,
+        "race": "zerg",
+        "mineral": 300,
+        "gas": 0,
+        "buildtime": 100,
+        "supplyoffer": 15,
+        "image": "jpgFiles/zerg/buildings/hatchery.jpg"
+      },
+      "baneling nest": {
+        "image": "jpgFiles/zerg/buildings/baneling nest.jpg"
+      },
+      "creep tumor": {
+        "image": "jpgFiles/zerg/buildings/creep tumor.jpg"
+      },
+      "evolution chamber": {
+        "image": "jpgFiles/zerg/buildings/evolution chamber.jpg"
+      },
+      "extractor": {
+        "image": "jpgFiles/zerg/buildings/extractor.jpg"
+      },
+      "greater spire": {
+        "image": "jpgFiles/zerg/buildings/greater spire.jpg"
+      },
+      "hive": {
+        "image": "jpgFiles/zerg/buildings/hive.jpg"
+      },
+      "hydralisk den": {
+        "image": "jpgFiles/zerg/buildings/hydralisk den.jpg"
+      },
+      "infestation pit": {
+        "image": "jpgFiles/zerg/buildings/infestation pit.jpg"
+      },
+      "lair": {
+        "image": "jpgFiles/zerg/buildings/lair.jpg"
+      },
+      "lurker den": {
+        "image": "jpgFiles/zerg/buildings/lurker den.png"
+      },
+      "nydus network": {
+        "image": "jpgFiles/zerg/buildings/nydus network.jpg"
+      },
+      "nydus worm": {
+        "image": "jpgFiles/zerg/buildings/nydus worm.jpg"
+      },
+      "roach warren": {
+        "image": "jpgFiles/zerg/buildings/roach warren.jpg"
+      },
+      "spawning pool": {
+        "image": "jpgFiles/zerg/buildings/spawning pool.jpg"
+      },
+      "spine crawler": {
+        "image": "jpgFiles/zerg/buildings/spine crawler.jpg"
+      },
+      "spire": {
+        "image": "jpgFiles/zerg/buildings/spire.jpg"
+      },
+      "spore crawler": {
+        "image": "jpgFiles/zerg/buildings/spore crawler.jpg"
+      },
+      "ultralisk cavern": {
+        "image": "jpgFiles/zerg/buildings/ultralisk cavern.jpg"
+      }
+    }
+  },
+  "upgrade": {
+    "protoss": {
+      "air armor level 1": {
+        "image": "jpgFiles/protoss/upgrades/air armor level 1.gif"
+      },
+      "air armor level 2": {
+        "image": "jpgFiles/protoss/upgrades/air armor level 2.gif"
+      },
+      "air armor level 3": {
+        "image": "jpgFiles/protoss/upgrades/air armor level 3.gif"
+      },
+      "air weapons level 1": {
+        "image": "jpgFiles/protoss/upgrades/air weapons level 1.gif"
+      },
+      "air weapons level 2": {
+        "image": "jpgFiles/protoss/upgrades/air weapons level 2.gif"
+      },
+      "air weapons level 3": {
+        "image": "jpgFiles/protoss/upgrades/air weapons level 3.gif"
+      },
+      "anion pulse-crystals research": {
+        "image": "jpgFiles/protoss/upgrades/anion pulse-crystals research.png"
+      },
+      "blink research": {
+        "image": "jpgFiles/protoss/upgrades/blink research.png"
+      },
+      "charge research": {
+        "image": "jpgFiles/protoss/upgrades/charge research.png"
+      },
+      "extended thermal lances research": {
+        "image": "jpgFiles/protoss/upgrades/extended thermal lances research.gif"
+      },
+      "gravitic boosters research": {
+        "image": "jpgFiles/protoss/upgrades/gravitic boosters research.gif"
+      },
+      "gravitic drive research": {
+        "image": "jpgFiles/protoss/upgrades/gravitic drive research.gif"
+      },
+      "graviton catapult research": {
+        "image": "jpgFiles/protoss/upgrades/graviton catapult research.gif"
+      },
+      "ground armor level 1": {
+        "image": "jpgFiles/protoss/upgrades/ground armor level 1.gif"
+      },
+      "ground armor level 2": {
+        "image": "jpgFiles/protoss/upgrades/ground armor level 2.gif"
+      },
+      "ground armor level 3": {
+        "image": "jpgFiles/protoss/upgrades/ground armor level 3.gif"
+      },
+      "ground weapons level 1": {
+        "image": "jpgFiles/protoss/upgrades/ground weapons level 1.gif"
+      },
+      "ground weapons level 2": {
+        "image": "jpgFiles/protoss/upgrades/ground weapons level 2.gif"
+      },
+      "ground weapons level 3": {
+        "image": "jpgFiles/protoss/upgrades/ground weapons level 3.gif"
+      },
+      "psionic storm research": {
+        "image": "jpgFiles/protoss/upgrades/psionic storm research.png"
+      },
+      "resonating glaives research": {
+        "image": "jpgFiles/protoss/upgrades/resonating glaives research.jpg"
+      },
+      "shadow stride research": {
+        "image": "jpgFiles/protoss/upgrades/shadow stride research.png"
+      },
+      "shields level 1": {
+        "image": "jpgFiles/protoss/upgrades/shields level 1.gif"
+      },
+      "shields level 2": {
+        "image": "jpgFiles/protoss/upgrades/shields level 2.gif"
+      },
+      "shields level 3": {
+        "image": "jpgFiles/protoss/upgrades/shields level 3.gif"
+      },
+      "warp gate research": {
+        "image": "jpgFiles/protoss/upgrades/warp gate research.jpg"
+      }
+    },
+    "terran": {
+      "infantry weapons level 1": {
+        "image": "jpgFiles/terran/upgrades/Infantry weapons level 1.gif"
+      },
+      "infantry weapons level 2": {
+        "image": "jpgFiles/terran/upgrades/Infantry weapons level 2.gif"
+      },
+      "infantry weapons level 3": {
+        "image": "jpgFiles/terran/upgrades/Infantry weapons level 3.gif"
+      },
+      "advanced ballistics research": {
+        "image": "jpgFiles/terran/upgrades/advanced ballistics research.jpg"
+      },
+      "caduceus reactor research": {
+        "image": "jpgFiles/terran/upgrades/caduceus reactor research.gif"
+      },
+      "cloaking field research": {
+        "image": "jpgFiles/terran/upgrades/cloaking field research.png"
+      },
+      "combat shield research": {
+        "image": "jpgFiles/terran/upgrades/combat shield research.png"
+      },
+      "concussive shells research": {
+        "image": "jpgFiles/terran/upgrades/concussive shells research.png"
+      },
+      "corvid reactor research": {
+        "image": "jpgFiles/terran/upgrades/corvid reactor research.gif"
+      },
+      "drilling claws research": {
+        "image": "jpgFiles/terran/upgrades/drilling claws research.png"
+      },
+      "durable materials research": {
+        "image": "jpgFiles/terran/upgrades/durable materials research.gif"
+      },
+      "hisec auto tracking research": {
+        "image": "jpgFiles/terran/upgrades/hisec auto tracking research.gif"
+      },
+      "hyperflight rotors research": {
+        "image": "jpgFiles/terran/upgrades/hyperflight rotors research.jpg"
+      },
+      "infantry armor level 1": {
+        "image": "jpgFiles/terran/upgrades/infantry armor level 1.gif"
+      },
+      "infantry armor level 2": {
+        "image": "jpgFiles/terran/upgrades/infantry armor level 2.gif"
+      },
+      "infantry armor level 3": {
+        "image": "jpgFiles/terran/upgrades/infantry armor level 3.gif"
+      },
+      "infernal preigniter research": {
+        "image": "jpgFiles/terran/upgrades/infernal preigniter research.jpg"
+      },
+      "neosteel frames research": {
+        "image": "jpgFiles/terran/upgrades/neosteel frames research.gif"
+      },
+      "personal cloaking research": {
+        "image": "jpgFiles/terran/upgrades/personal cloaking research.png"
+      },
+      "ship weapons leve l 1": {
+        "image": "jpgFiles/terran/upgrades/ship weapons leve l 1.gif"
+      },
+      "ship weapons level 2": {
+        "image": "jpgFiles/terran/upgrades/ship weapons level 2.gif"
+      },
+      "ship weapons level 3": {
+        "image": "jpgFiles/terran/upgrades/ship weapons level 3.gif"
+      },
+      "stimpack research": {
+        "image": "jpgFiles/terran/upgrades/stimpack research.png"
+      },
+      "structure armor research": {
+        "image": "jpgFiles/terran/upgrades/structure armor research.gif"
+      },
+      "vehicle plating level 1": {
+        "image": "jpgFiles/terran/upgrades/vehicle plating level 1.gif"
+      },
+      "vehicle plating level 2": {
+        "image": "jpgFiles/terran/upgrades/vehicle plating level 2.gif"
+      },
+      "vehicle plating level 3": {
+        "image": "jpgFiles/terran/upgrades/vehicle plating level 3.gif"
+      },
+      "vehicle weapons level 1": {
+        "image": "jpgFiles/terran/upgrades/vehicle weapons level 1.gif"
+      },
+      "vehicle weapons level 2": {
+        "image": "jpgFiles/terran/upgrades/vehicle weapons level 2.gif"
+      },
+      "vehicle weapons level 3": {
+        "image": "jpgFiles/terran/upgrades/vehicle weapons level 3.gif"
+      },
+      "weapon refit research": {
+        "image": "jpgFiles/terran/upgrades/weapon refit research.png"
+      }
+    },
+    "zerg": {}
+  },
+  "extras": {
+    "zerg": {
+      "units": {
+        "baneling": "jpgFiles/zerg/units/baneling.jpg",
+        "brood lord": "jpgFiles/zerg/units/brood lord.jpg",
+        "corruptor": "jpgFiles/zerg/units/corruptor.jpg",
+        "hydralisk": "jpgFiles/zerg/units/hydralisk.jpg",
+        "infestor": "jpgFiles/zerg/units/infestor.jpg",
+        "larva": "jpgFiles/zerg/units/larva.jpg",
+        "lurker": "jpgFiles/zerg/units/lurker.jpg",
+        "mutalisk": "jpgFiles/zerg/units/mutalisk.jpg",
+        "overlord": "jpgFiles/zerg/units/overlord.jpg",
+        "overseer": "jpgFiles/zerg/units/overseer.jpg",
+        "queen": "jpgFiles/zerg/units/queen.jpg",
+        "ravager": "jpgFiles/zerg/units/ravager.jpg",
+        "roach": "jpgFiles/zerg/units/roach.jpg",
+        "swarm host": "jpgFiles/zerg/units/swarm host.jpg",
+        "ultralisk": "jpgFiles/zerg/units/ultralisk.jpg",
+        "viper": "jpgFiles/zerg/units/viper.jpg",
+        "zergling": "jpgFiles/zerg/units/zergling.jpg"
+      },
+      "buildings": {
+        "baneling nest": "jpgFiles/zerg/buildings/baneling nest.jpg",
+        "creep tumor": "jpgFiles/zerg/buildings/creep tumor.jpg",
+        "evolution chamber": "jpgFiles/zerg/buildings/evolution chamber.jpg",
+        "extractor": "jpgFiles/zerg/buildings/extractor.jpg",
+        "greater spire": "jpgFiles/zerg/buildings/greater spire.jpg",
+        "hive": "jpgFiles/zerg/buildings/hive.jpg",
+        "hydralisk den": "jpgFiles/zerg/buildings/hydralisk den.jpg",
+        "infestation pit": "jpgFiles/zerg/buildings/infestation pit.jpg",
+        "lair": "jpgFiles/zerg/buildings/lair.jpg",
+        "lurker den": "jpgFiles/zerg/buildings/lurker den.png",
+        "nydus network": "jpgFiles/zerg/buildings/nydus network.jpg",
+        "nydus worm": "jpgFiles/zerg/buildings/nydus worm.jpg",
+        "roach warren": "jpgFiles/zerg/buildings/roach warren.jpg",
+        "spawning pool": "jpgFiles/zerg/buildings/spawning pool.jpg",
+        "spine crawler": "jpgFiles/zerg/buildings/spine crawler.jpg",
+        "spire": "jpgFiles/zerg/buildings/spire.jpg",
+        "spore crawler": "jpgFiles/zerg/buildings/spore crawler.jpg",
+        "ultralisk cavern": "jpgFiles/zerg/buildings/ultralisk cavern.jpg"
+      }
+    },
+    "terran": {
+      "units": {
+        "mule": "jpgFiles/terran/units/MULE.jpg",
+        "banshee": "jpgFiles/terran/units/banshee.jpg",
+        "battlecruiser": "jpgFiles/terran/units/battlecruiser.jpg",
+        "cyclone": "jpgFiles/terran/units/cyclone.jpg",
+        "ghost": "jpgFiles/terran/units/ghost.jpg",
+        "hellbat": "jpgFiles/terran/units/hellbat.jpg",
+        "hellion": "jpgFiles/terran/units/hellion.jpg",
+        "liberator": "jpgFiles/terran/units/liberator.jpg",
+        "marauder": "jpgFiles/terran/units/marauder.jpg",
+        "marine": "jpgFiles/terran/units/marine.jpg",
+        "medivac": "jpgFiles/terran/units/medivac.jpg",
+        "raven": "jpgFiles/terran/units/raven.jpg",
+        "reaper": "jpgFiles/terran/units/reaper.jpg",
+        "siege tank": "jpgFiles/terran/units/siege tank.jpg",
+        "thor": "jpgFiles/terran/units/thor.jpg",
+        "viking": "jpgFiles/terran/units/viking.jpg",
+        "widow mine": "jpgFiles/terran/units/widow mine.jpg"
+      },
+      "buildings": {
+        "armory": "jpgFiles/terran/buildings/armory.jpg",
+        "barracks": "jpgFiles/terran/buildings/barracks.jpg",
+        "bunker": "jpgFiles/terran/buildings/bunker.jpg",
+        "engineering bay": "jpgFiles/terran/buildings/engineering bay.jpg",
+        "factory": "jpgFiles/terran/buildings/factory.jpg",
+        "fusion core": "jpgFiles/terran/buildings/fusion core.jpg",
+        "ghost academy": "jpgFiles/terran/buildings/ghost academy.jpg",
+        "missile turret": "jpgFiles/terran/buildings/missile turret.jpg",
+        "orbital command": "jpgFiles/terran/buildings/orbital command.jpg",
+        "planetary fortress": "jpgFiles/terran/buildings/planetary fortress.jpg",
+        "reactor": "jpgFiles/terran/buildings/reactor.jpg",
+        "refinery": "jpgFiles/terran/buildings/refinery.jpg",
+        "sensor tower": "jpgFiles/terran/buildings/sensor tower.jpg",
+        "starport": "jpgFiles/terran/buildings/starport.jpg",
+        "supply depot": "jpgFiles/terran/buildings/supply depot.jpg",
+        "tech lab": "jpgFiles/terran/buildings/tech lab.jpg"
+      },
+      "upgrades": {
+        "infantry weapons level 1": "jpgFiles/terran/upgrades/Infantry weapons level 1.gif",
+        "infantry weapons level 2": "jpgFiles/terran/upgrades/Infantry weapons level 2.gif",
+        "infantry weapons level 3": "jpgFiles/terran/upgrades/Infantry weapons level 3.gif",
+        "advanced ballistics research": "jpgFiles/terran/upgrades/advanced ballistics research.jpg",
+        "caduceus reactor research": "jpgFiles/terran/upgrades/caduceus reactor research.gif",
+        "cloaking field research": "jpgFiles/terran/upgrades/cloaking field research.png",
+        "combat shield research": "jpgFiles/terran/upgrades/combat shield research.png",
+        "concussive shells research": "jpgFiles/terran/upgrades/concussive shells research.png",
+        "corvid reactor research": "jpgFiles/terran/upgrades/corvid reactor research.gif",
+        "drilling claws research": "jpgFiles/terran/upgrades/drilling claws research.png",
+        "durable materials research": "jpgFiles/terran/upgrades/durable materials research.gif",
+        "hisec auto tracking research": "jpgFiles/terran/upgrades/hisec auto tracking research.gif",
+        "hyperflight rotors research": "jpgFiles/terran/upgrades/hyperflight rotors research.jpg",
+        "infantry armor level 1": "jpgFiles/terran/upgrades/infantry armor level 1.gif",
+        "infantry armor level 2": "jpgFiles/terran/upgrades/infantry armor level 2.gif",
+        "infantry armor level 3": "jpgFiles/terran/upgrades/infantry armor level 3.gif",
+        "infernal preigniter research": "jpgFiles/terran/upgrades/infernal preigniter research.jpg",
+        "neosteel frames research": "jpgFiles/terran/upgrades/neosteel frames research.gif",
+        "personal cloaking research": "jpgFiles/terran/upgrades/personal cloaking research.png",
+        "ship weapons leve l 1": "jpgFiles/terran/upgrades/ship weapons leve l 1.gif",
+        "ship weapons level 2": "jpgFiles/terran/upgrades/ship weapons level 2.gif",
+        "ship weapons level 3": "jpgFiles/terran/upgrades/ship weapons level 3.gif",
+        "stimpack research": "jpgFiles/terran/upgrades/stimpack research.png",
+        "structure armor research": "jpgFiles/terran/upgrades/structure armor research.gif",
+        "vehicle plating level 1": "jpgFiles/terran/upgrades/vehicle plating level 1.gif",
+        "vehicle plating level 2": "jpgFiles/terran/upgrades/vehicle plating level 2.gif",
+        "vehicle plating level 3": "jpgFiles/terran/upgrades/vehicle plating level 3.gif",
+        "vehicle weapons level 1": "jpgFiles/terran/upgrades/vehicle weapons level 1.gif",
+        "vehicle weapons level 2": "jpgFiles/terran/upgrades/vehicle weapons level 2.gif",
+        "vehicle weapons level 3": "jpgFiles/terran/upgrades/vehicle weapons level 3.gif",
+        "weapon refit research": "jpgFiles/terran/upgrades/weapon refit research.png"
+      }
+    },
+    "protoss": {
+      "units": {
+        "adept": "jpgFiles/protoss/units/adept.jpg",
+        "archon": "jpgFiles/protoss/units/archon.jpg",
+        "archon_d+d": "jpgFiles/protoss/units/archon_d+d.jpg",
+        "archon_d+h": "jpgFiles/protoss/units/archon_d+h.jpg",
+        "carrier": "jpgFiles/protoss/units/carrier.jpg",
+        "colossus": "jpgFiles/protoss/units/colossus.jpg",
+        "dark templar": "jpgFiles/protoss/units/dark templar.jpg",
+        "disruptor": "jpgFiles/protoss/units/disruptor.jpg",
+        "high templar": "jpgFiles/protoss/units/high templar.jpg",
+        "immortal": "jpgFiles/protoss/units/immortal.jpg",
+        "mothership core": "jpgFiles/protoss/units/mothership core.jpg",
+        "mothership": "jpgFiles/protoss/units/mothership.jpg",
+        "observer": "jpgFiles/protoss/units/observer.jpg",
+        "oracle": "jpgFiles/protoss/units/oracle.jpg",
+        "phoenix": "jpgFiles/protoss/units/phoenix.jpg",
+        "sentry": "jpgFiles/protoss/units/sentry.jpg",
+        "stalker": "jpgFiles/protoss/units/stalker.jpg",
+        "tempest": "jpgFiles/protoss/units/tempest.jpg",
+        "void ray": "jpgFiles/protoss/units/void ray.jpg",
+        "warp adept": "jpgFiles/protoss/units/warp adept.jpg",
+        "warp dark templar": "jpgFiles/protoss/units/warp dark templar.jpg",
+        "warp high templar": "jpgFiles/protoss/units/warp high templar.jpg",
+        "warp prism": "jpgFiles/protoss/units/warp prism.jpg",
+        "warp sentry": "jpgFiles/protoss/units/warp sentry.jpg",
+        "warp stalker": "jpgFiles/protoss/units/warp stalker.jpg",
+        "warp zealot": "jpgFiles/protoss/units/warp zealot.jpg"
+      },
+      "buildings": {
+        "assimilator": "jpgFiles/protoss/buildings/assimilator.jpg",
+        "cybernetics core": "jpgFiles/protoss/buildings/cybernetics core.jpg",
+        "dark shrine": "jpgFiles/protoss/buildings/dark shrine.jpg",
+        "fleet beacon": "jpgFiles/protoss/buildings/fleet beacon.jpg",
+        "forge": "jpgFiles/protoss/buildings/forge.jpg",
+        "gateway": "jpgFiles/protoss/buildings/gateway.jpg",
+        "photon cannon": "jpgFiles/protoss/buildings/photon cannon.jpg",
+        "pylon": "jpgFiles/protoss/buildings/pylon.jpg",
+        "robotics bay": "jpgFiles/protoss/buildings/robotics bay.jpg",
+        "robotics facility": "jpgFiles/protoss/buildings/robotics facility.jpg",
+        "stargate": "jpgFiles/protoss/buildings/stargate.jpg",
+        "templar archives": "jpgFiles/protoss/buildings/templar archives.jpg",
+        "twilight council": "jpgFiles/protoss/buildings/twilight council.jpg",
+        "warp gate": "jpgFiles/protoss/buildings/warp gate.jpg"
+      },
+      "upgrades": {
+        "air armor level 1": "jpgFiles/protoss/upgrades/air armor level 1.gif",
+        "air armor level 2": "jpgFiles/protoss/upgrades/air armor level 2.gif",
+        "air armor level 3": "jpgFiles/protoss/upgrades/air armor level 3.gif",
+        "air weapons level 1": "jpgFiles/protoss/upgrades/air weapons level 1.gif",
+        "air weapons level 2": "jpgFiles/protoss/upgrades/air weapons level 2.gif",
+        "air weapons level 3": "jpgFiles/protoss/upgrades/air weapons level 3.gif",
+        "anion pulse-crystals research": "jpgFiles/protoss/upgrades/anion pulse-crystals research.png",
+        "blink research": "jpgFiles/protoss/upgrades/blink research.png",
+        "charge research": "jpgFiles/protoss/upgrades/charge research.png",
+        "extended thermal lances research": "jpgFiles/protoss/upgrades/extended thermal lances research.gif",
+        "gravitic boosters research": "jpgFiles/protoss/upgrades/gravitic boosters research.gif",
+        "gravitic drive research": "jpgFiles/protoss/upgrades/gravitic drive research.gif",
+        "graviton catapult research": "jpgFiles/protoss/upgrades/graviton catapult research.gif",
+        "ground armor level 1": "jpgFiles/protoss/upgrades/ground armor level 1.gif",
+        "ground armor level 2": "jpgFiles/protoss/upgrades/ground armor level 2.gif",
+        "ground armor level 3": "jpgFiles/protoss/upgrades/ground armor level 3.gif",
+        "ground weapons level 1": "jpgFiles/protoss/upgrades/ground weapons level 1.gif",
+        "ground weapons level 2": "jpgFiles/protoss/upgrades/ground weapons level 2.gif",
+        "ground weapons level 3": "jpgFiles/protoss/upgrades/ground weapons level 3.gif",
+        "psionic storm research": "jpgFiles/protoss/upgrades/psionic storm research.png",
+        "resonating glaives research": "jpgFiles/protoss/upgrades/resonating glaives research.jpg",
+        "shadow stride research": "jpgFiles/protoss/upgrades/shadow stride research.png",
+        "shields level 1": "jpgFiles/protoss/upgrades/shields level 1.gif",
+        "shields level 2": "jpgFiles/protoss/upgrades/shields level 2.gif",
+        "shields level 3": "jpgFiles/protoss/upgrades/shields level 3.gif",
+        "warp gate research": "jpgFiles/protoss/upgrades/warp gate research.jpg"
+      }
+    }
+  }
+}
