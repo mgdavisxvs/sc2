@@ -18,6 +18,7 @@ import { showStatus } from './ui/status.js';
 import createVisualizationDashboard from './ui/visualization-dashboard.js';
 import renderBuildLibrary from './ui/build-library.js';
 import createMRTSDashboard from './ui/mrts-dashboard.js';
+import createComparisonDashboard from './ui/build-comparison.js';
 import { getBuildDatabase } from './data/build-database.js';
 
 // Global database instance
@@ -323,19 +324,49 @@ function initEventHandlers() {
     document.body.style.overflow = 'hidden';
 
     try {
-      await renderBuildLibrary(container, (build) => {
-        // Load build into current state
-        state.clearBuild();
-        build.buildOrder.forEach(item => {
-          state.addToBuild(item, false, []);
-        });
-        renderBuildList(true);
-        renderCharts();
+      await renderBuildLibrary(
+        container,
+        // onLoadBuild callback
+        (build) => {
+          // Load build into current state
+          state.clearBuild();
+          build.buildOrder.forEach(item => {
+            state.addToBuild(item, false, []);
+          });
+          renderBuildList(true);
+          renderCharts();
 
-        // Close modal
-        modal.classList.add('hidden');
-        document.body.style.overflow = '';
-      });
+          // Close modal
+          modal.classList.add('hidden');
+          document.body.style.overflow = '';
+        },
+        // onCompareBuild callback
+        (builds) => {
+          // Close library modal
+          modal.classList.add('hidden');
+
+          // Open comparison modal
+          const compModal = $('#comparisonModal');
+          const compContainer = $('#comparisonContainer');
+
+          if (!compModal || !compContainer) {
+            showStatus('Comparison modal not found', 'error');
+            return;
+          }
+
+          compModal.classList.remove('hidden');
+          document.body.style.overflow = 'hidden';
+
+          // Create comparison dashboard
+          try {
+            createComparisonDashboard(compContainer, builds);
+            showStatus(`Comparing ${builds.length} builds`, 'success');
+          } catch (err) {
+            logger.error('Comparison error:', err);
+            showStatus('Failed to render comparison: ' + err.message, 'error', 4000);
+          }
+        }
+      );
     } catch (err) {
       logger.error('Library error:', err);
       showStatus('Failed to open library: ' + err.message, 'error', 4000);
@@ -383,6 +414,15 @@ function initEventHandlers() {
   // Close MRTS modal
   $('#closeMRTS')?.addEventListener('click', () => {
     const modal = $('#mrtsModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+  });
+
+  // Close comparison modal
+  $('#closeComparison')?.addEventListener('click', () => {
+    const modal = $('#comparisonModal');
     if (modal) {
       modal.classList.add('hidden');
       document.body.style.overflow = '';

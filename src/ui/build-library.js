@@ -7,12 +7,16 @@ import { getBuildDatabase } from '../data/build-database.js';
 import { logger } from '../core/logger.js';
 import { showStatus } from './status.js';
 
+// Track selected builds for comparison
+const selectedBuilds = new Set();
+
 /**
  * Render build library modal
  * @param {HTMLElement} container - Modal container
  * @param {Function} onLoadBuild - Callback when build is loaded
+ * @param {Function} onCompareBuild - Callback when comparison is requested
  */
-export async function renderBuildLibrary(container, onLoadBuild) {
+export default async function renderBuildLibrary(container, onLoadBuild, onCompareBuild) {
   const db = getBuildDatabase();
 
   try {
@@ -26,15 +30,18 @@ export async function renderBuildLibrary(container, onLoadBuild) {
   // Clear container
   container.innerHTML = '';
 
+  // Reset selected builds
+  selectedBuilds.clear();
+
   // Create UI structure
   const ui = createLibraryUI();
   container.appendChild(ui.root);
 
   // Load and render builds
-  await refreshBuildList(ui, db, onLoadBuild);
+  await refreshBuildList(ui, db, onLoadBuild, onCompareBuild);
 
   // Set up event listeners
-  setupEventListeners(ui, db, onLoadBuild);
+  setupEventListeners(ui, db, onLoadBuild, onCompareBuild);
 
   return ui;
 }
@@ -76,6 +83,9 @@ function createLibraryUI() {
       </div>
 
       <div class="library-actions">
+        <button id="compareBuilds" class="action-btn" style="display: none; background: linear-gradient(to right, #6366f1, #8b5cf6); color: white;">
+          ⚖️ Compare (<span id="compareCount">0</span>)
+        </button>
         <button id="importBuild" class="action-btn">
           📥 Import Build
         </button>
@@ -112,6 +122,8 @@ function createLibraryUI() {
     buildGrid: root.querySelector('#buildGrid'),
     emptyState: root.querySelector('#emptyState'),
     stats: root.querySelector('#libraryStats'),
+    compareBtn: root.querySelector('#compareBuilds'),
+    compareCount: root.querySelector('#compareCount'),
     importBtn: root.querySelector('#importBuild'),
     exportBtn: root.querySelector('#exportAll'),
     clearBtn: root.querySelector('#clearAll'),
@@ -121,20 +133,20 @@ function createLibraryUI() {
 /**
  * Set up event listeners
  */
-function setupEventListeners(ui, db, onLoadBuild) {
+function setupEventListeners(ui, db, onLoadBuild, onCompareBuild) {
   // Search
   ui.search.addEventListener('input', () => {
-    refreshBuildList(ui, db, onLoadBuild);
+    refreshBuildList(ui, db, onLoadBuild, onCompareBuild);
   });
 
   // Race filter
   ui.raceFilter.addEventListener('change', () => {
-    refreshBuildList(ui, db, onLoadBuild);
+    refreshBuildList(ui, db, onLoadBuild, onCompareBuild);
   });
 
   // Sort
   ui.sortBy.addEventListener('change', () => {
-    refreshBuildList(ui, db, onLoadBuild);
+    refreshBuildList(ui, db, onLoadBuild, onCompareBuild);
   });
 
   // Favorites only
@@ -142,12 +154,36 @@ function setupEventListeners(ui, db, onLoadBuild) {
     const isActive = ui.favoritesOnly.dataset.active === 'true';
     ui.favoritesOnly.dataset.active = !isActive;
     ui.favoritesOnly.classList.toggle('active');
-    refreshBuildList(ui, db, onLoadBuild);
+    refreshBuildList(ui, db, onLoadBuild, onCompareBuild);
+  });
+
+  // Compare builds
+  ui.compareBtn.addEventListener('click', async () => {
+    if (selectedBuilds.size < 2) {
+      showStatus('Select at least 2 builds to compare', 'error', 3000);
+      return;
+    }
+
+    if (selectedBuilds.size > 4) {
+      showStatus('Maximum 4 builds can be compared at once', 'error', 3000);
+      return;
+    }
+
+    // Fetch full build data for selected IDs
+    const builds = [];
+    for (const id of selectedBuilds) {
+      const build = await db.getBuild(id);
+      if (build) builds.push(build);
+    }
+
+    if (onCompareBuild) {
+      onCompareBuild(builds);
+    }
   });
 
   // Import
   ui.importBtn.addEventListener('click', () => {
-    importBuildDialog(db, () => refreshBuildList(ui, db, onLoadBuild));
+    importBuildDialog(db, () => refreshBuildList(ui, db, onLoadBuild, onCompareBuild));
   });
 
   // Export all
@@ -175,7 +211,7 @@ function setupEventListeners(ui, db, onLoadBuild) {
     try {
       const deleted = await db.clearAll();
       showStatus(`Deleted ${deleted} builds`, 'success');
-      refreshBuildList(ui, db, onLoadBuild);
+      refreshBuildList(ui, db, onLoadBuild, onCompareBuild);
     } catch (err) {
       logger.error('Clear failed:', err);
       showStatus('Failed to clear builds: ' + err.message, 'error');
@@ -186,7 +222,7 @@ function setupEventListeners(ui, db, onLoadBuild) {
 /**
  * Refresh build list
  */
-async function refreshBuildList(ui, db, onLoadBuild) {
+async function refreshBuildList(ui, db, onLoadBuild, onCompareBuild) {
   const options = {
     search: ui.search.value.trim(),
     race: ui.raceFilter.value || undefined,
@@ -200,7 +236,7 @@ async function refreshBuildList(ui, db, onLoadBuild) {
     const tags = await db.getAllTags();
 
     renderBuildCards(ui.buildGrid, builds, db, onLoadBuild, () =>
-      refreshBuildList(ui, db, onLoadBuild)
+      refreshBuildList(ui, db, onLoadBuild, onCompareBuild), ui
     );
     renderTagFilters(ui.tagFilters, tags);
     renderStats(ui.stats, await db.getStats());
@@ -222,11 +258,11 @@ async function refreshBuildList(ui, db, onLoadBuild) {
 /**
  * Render build cards
  */
-function renderBuildCards(container, builds, db, onLoadBuild, onRefresh) {
+function renderBuildCards(container, builds, db, onLoadBuild, onRefresh, ui) {
   container.innerHTML = '';
 
   builds.forEach((build) => {
-    const card = createBuildCard(build, db, onLoadBuild, onRefresh);
+    const card = createBuildCard(build, db, onLoadBuild, onRefresh, ui);
     container.appendChild(card);
   });
 }
@@ -234,7 +270,7 @@ function renderBuildCards(container, builds, db, onLoadBuild, onRefresh) {
 /**
  * Create build card element
  */
-function createBuildCard(build, db, onLoadBuild, onRefresh) {
+function createBuildCard(build, db, onLoadBuild, onRefresh, ui) {
   const card = document.createElement('div');
   card.className = 'build-card';
 
@@ -244,12 +280,23 @@ function createBuildCard(build, db, onLoadBuild, onRefresh) {
     zerg: '#6d28d9',
   };
 
+  const isSelected = selectedBuilds.has(build.id);
+
   card.innerHTML = `
     <div class="build-card-header" style="border-left: 4px solid ${
       raceColors[build.race] || '#666'
     }">
       <div class="build-card-title">
-        <h4>${escapeHtml(build.name)}</h4>
+        <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+          <input
+            type="checkbox"
+            class="select-build-checkbox"
+            data-id="${build.id}"
+            ${isSelected ? 'checked' : ''}
+            style="width: 18px; height: 18px; cursor: pointer;"
+          />
+          <h4 style="margin: 0;">${escapeHtml(build.name)}</h4>
+        </div>
         <button class="favorite-btn ${build.favorited ? 'active' : ''}" data-id="${
     build.id
   }">
@@ -320,6 +367,25 @@ function createBuildCard(build, db, onLoadBuild, onRefresh) {
   `;
 
   // Event listeners
+  card.querySelector('.select-build-checkbox').addEventListener('change', (e) => {
+    const id = e.target.dataset.id;
+    if (e.target.checked) {
+      selectedBuilds.add(id);
+    } else {
+      selectedBuilds.delete(id);
+    }
+
+    // Update compare button visibility and count
+    if (ui) {
+      ui.compareCount.textContent = selectedBuilds.size;
+      if (selectedBuilds.size >= 2 && selectedBuilds.size <= 4) {
+        ui.compareBtn.style.display = 'inline-block';
+      } else {
+        ui.compareBtn.style.display = 'none';
+      }
+    }
+  });
+
   card.querySelector('.favorite-btn').addEventListener('click', async (e) => {
     try {
       await db.toggleFavorite(build.id);
