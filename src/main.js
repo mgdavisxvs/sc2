@@ -17,6 +17,7 @@ import { initTheme, applyRaceTheme } from './ui/theme.js';
 import { showStatus } from './ui/status.js';
 import createVisualizationDashboard from './ui/visualization-dashboard.js';
 import renderBuildLibrary from './ui/build-library.js';
+import createMRTSDashboard from './ui/mrts-dashboard.js';
 import { getBuildDatabase } from './data/build-database.js';
 
 // Global database instance
@@ -344,6 +345,44 @@ function initEventHandlers() {
   // Close library modal
   $('#closeLibrary')?.addEventListener('click', () => {
     const modal = $('#libraryModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+  });
+
+  // MRTS Analysis
+  $('#mrtsAnalysis')?.addEventListener('click', () => {
+    if (!state.build || state.build.length === 0) {
+      showStatus('Build order is empty - add some units/buildings first', 'error', 3000);
+      return;
+    }
+
+    // Show modal
+    const modal = $('#mrtsModal');
+    const container = $('#mrtsContainer');
+
+    if (!modal || !container) {
+      showStatus('MRTS modal not found', 'error');
+      return;
+    }
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    // Create MRTS dashboard
+    try {
+      createMRTSDashboard(container, state.build, state.race);
+      showStatus('MRTS analysis rendered', 'success');
+    } catch (err) {
+      logger.error('MRTS error:', err);
+      showStatus('Failed to render MRTS analysis: ' + err.message, 'error', 4000);
+    }
+  });
+
+  // Close MRTS modal
+  $('#closeMRTS')?.addEventListener('click', () => {
+    const modal = $('#mrtsModal');
     if (modal) {
       modal.classList.add('hidden');
       document.body.style.overflow = '';

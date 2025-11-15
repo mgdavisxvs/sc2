@@ -246,6 +246,7 @@
               <button id="saveBuild" class="px-3 py-1 rounded bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm font-medium hover:from-green-700 hover:to-emerald-700 transition shadow-sm">💾 Save</button>
               <button id="openLibrary" class="px-3 py-1 rounded bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium hover:from-blue-700 hover:to-indigo-700 transition shadow-sm">📚 Library</button>
               <button id="visualizeBuild" class="px-3 py-1 rounded bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-medium hover:from-purple-700 hover:to-blue-700 transition shadow-sm">📊 Visualize</button>
+              <button id="mrtsAnalysis" class="px-3 py-1 rounded bg-gradient-to-r from-orange-600 to-red-600 text-white text-sm font-medium hover:from-orange-700 hover:to-red-700 transition shadow-sm">📈 MRTS</button>
               <button id="clearBuild" class="px-3 py-1 rounded border text-sm">Clear</button>
               <button id="copyText" class="px-3 py-1 rounded border text-sm">Copy (text)</button>
               <button id="copyJson" class="px-3 py-1 rounded border text-sm">Copy (JSON)</button>
@@ -347,6 +348,49 @@
       </div>
     </div>
     <div id="libraryContainer" class="h-full"></div>
+  </div>
+
+  <!-- MRTS Analysis Modal -->
+  <div id="mrtsModal"
+       class="fixed inset-0 hidden bg-white dark:bg-slate-900 z-50 overflow-y-auto">
+    <div class="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 shadow-sm">
+      <div class="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+            Economic Analysis (MRTS)
+          </h2>
+          <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+            Marginal Rate of Technical Substitution - Resource tradeoff analysis
+          </p>
+        </div>
+        <button id="closeMRTS"
+                class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-sm font-medium">
+          ✕ Close
+        </button>
+      </div>
+
+      <!-- Tabs for different MRTS analyses -->
+      <div class="max-w-[1600px] mx-auto px-6 border-b border-slate-200 dark:border-slate-700">
+        <div class="flex gap-2 -mb-px">
+          <button class="mrts-tab px-4 py-3 text-sm font-medium border-b-2 border-orange-600 text-orange-600" data-tab="overview">
+            Overview
+          </button>
+          <button class="mrts-tab px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200" data-tab="mineral-gas">
+            Mineral-Gas
+          </button>
+          <button class="mrts-tab px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200" data-tab="time-cost">
+            Time-Cost
+          </button>
+          <button class="mrts-tab px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200" data-tab="recommendations">
+            Recommendations
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="mrtsContainer" class="max-w-[1600px] mx-auto px-6 py-6">
+      <!-- MRTS content will be dynamically loaded here -->
+    </div>
   </div>
 
   <!-- Main application entry point -->
