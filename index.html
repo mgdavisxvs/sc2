@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <title>SC2 Build Lab v2.0 - Refactored</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Fonts & Tailwind -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Inconsolata:wght@400;600&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial'],
+          mono: ['Inconsolata', 'ui-monospace', 'SFMono-Regular', 'Menlo']
+        },
+        extend: {
+          colors: {
+            protoss: { 50:'#eef2ff', 500:'#2563eb', 600:'#1d4ed8' },
+            terran:  { 50:'#fef2f2', 500:'#ef4444', 600:'#dc2626' },
+            zerg:    { 50:'#f5f3ff', 500:'#6d28d9', 600:'#5b21b6' },
+            steel: '#334155',
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    :root { color-scheme: light dark; }
+    html[data-theme="dark"] body { background: #0b1220; color: #e5e7eb; }
+    html[data-theme="dark"] .card { background: #0f172a; }
+    html[data-theme="light"] .card { background: white; }
+    .img-zoom { transition: transform 160ms ease; }
+    .img-zoom:hover { transform: scale(1.06); }
+    .fade-in { animation: fadeIn 200ms ease-out both; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    #drop-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .2s ease-in-out;
+    }
+    #drop-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+    #status-message {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: .5rem .875rem;
+      border-radius: .5rem;
+      box-shadow: 0 4px 14px rgba(0,0,0,.15);
+      z-index: 110;
+      opacity: 0;
+      transition: opacity .25s ease, transform .25s ease;
+      pointer-events: none;
+    }
+    #status-message.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    #status-message.hide {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-8px);
+    }
+    .d3-axis path, .d3-axis line { stroke: #94a3b8; }
+    .d3-axis text { fill: #64748b; font-family: Inconsolata, monospace; font-size: 10px; }
+    html[data-theme="dark"] .d3-axis path,
+    html[data-theme="dark"] .d3-axis line { stroke: #475569; }
+    html[data-theme="dark"] .d3-axis text { fill: #cbd5e1; }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-slate-800 selection:text-white">
+
+  <!-- Status Toast -->
+  <div id="status-message" class="bg-blue-500 text-white text-sm">Ready</div>
+
+  <!-- Drag & Drop Overlay -->
+  <div id="drop-overlay">
+    <div class="text-center p-10 border-4 border-dashed border-gray-400 rounded-lg bg-gray-800 bg-opacity-80">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+           stroke-width="1.5" stroke="currentColor"
+           class="w-16 h-16 mx-auto text-gray-300 mb-4">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+      </svg>
+      <p class="text-2xl font-bold text-white">Drop sc2units.json Here</p>
+      <p class="text-sm text-slate-200 mt-2">or use the "Load JSON" button in the header</p>
+    </div>
+  </div>
+
+  <!-- Optional embedded JSON -->
+  <script id="sc2-data" type="application/json"></script>
+
+  <header class="sticky top-0 z-30 border-b border-slate-200/40 backdrop-blur bg-white/75 dark:bg-slate-900/60">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div id="raceDot" class="w-3 h-3 rounded-full bg-steel"></div>
+        <h1 class="text-xl md:text-2xl font-semibold tracking-tight">
+          SC2 Build Lab v2.0
+        </h1>
+        <span id="raceBadge"
+              class="ml-2 text-xs px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-700">-</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <span id="schemaSummary" class="text-xs text-slate-500 mr-2">
+          No JSON loaded.
+        </span>
+        <input id="imgRoot" type="text"
+               placeholder="Image root (e.g., ./jpgFiles/)"
+               class="hidden md:block w-56 px-3 py-1 rounded border text-xs dark:bg-slate-900 dark:border-slate-700"
+               title="Prefix added to every relative image path" />
+        <button id="themeToggle"
+                class="text-xs px-3 py-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          Theme
+        </button>
+        <button id="darkModeToggle"
+                class="text-xs px-3 py-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          Dark
+        </button>
+        <label
+          class="text-xs px-3 py-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
+          Load JSON
+          <input id="fileInput" type="file" accept="application/json,.json" class="hidden" />
+        </label>
+        <button id="autoBuild"
+                class="text-xs px-3 py-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800">
+          Auto Build
+        </button>
+        <button id="exportBuild"
+                class="text-xs px-3 py-1 rounded bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900">
+          Export Build
+        </button>
+      </div>
+    </div>
+    <div id="brokenBanner"
+         class="hidden bg-amber-50 text-amber-900 dark:bg-amber-900/30 dark:text-amber-100 border-t border-amber-200 dark:border-amber-800">
+      <div class="max-w-7xl mx-auto px-4 py-2 text-sm flex items-center gap-2">
+        <strong class="font-semibold">Image issues detected:</strong>
+        <span id="brokenCount">0</span> broken image(s).
+        <button id="copyBroken"
+                class="ml-auto px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 text-xs">
+          Copy list
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-4 md:py-6">
+    <!-- Race selector -->
+    <nav class="flex flex-wrap gap-2 mb-4">
+      <button data-race="protoss"
+              class="race-tab px-3 py-1 rounded-full border text-sm hover:shadow inline-flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-protoss-500"></span> Protoss
+      </button>
+      <button data-race="terran"
+              class="race-tab px-3 py-1 rounded-full border text-sm hover:shadow inline-flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-terran-500"></span> Terran
+      </button>
+      <button data-race="zerg"
+              class="race-tab px-3 py-1 rounded-full border text-sm hover:shadow inline-flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-zerg-500"></span> Zerg
+      </button>
+    </nav>
+
+    <!-- Tabs + search/sort -->
+    <div class="flex flex-wrap items-center gap-3 mb-4">
+      <div class="inline-flex rounded-lg border overflow-hidden">
+        <button class="section-tab px-3 py-1 text-sm border-r" data-section="units">Units</button>
+        <button class="section-tab px-3 py-1 text-sm border-r" data-section="buildings">Buildings</button>
+        <button class="section-tab px-3 py-1 text-sm" data-section="upgrades">Upgrades</button>
+      </div>
+
+      <div class="flex items-center gap-2 grow">
+        <input id="searchInput" type="search" placeholder="Search by name…"
+               class="grow px-3 py-2 rounded border text-sm outline-none focus:ring-2 ring-slate-400 dark:bg-slate-900 dark:border-slate-700" />
+        <select id="sortSelect"
+                class="px-2 py-2 rounded border text-sm dark:bg-slate-900 dark:border-slate-700">
+          <option value="">Sort…</option>
+          <option value="mineral">Mineral</option>
+          <option value="gas">Gas</option>
+          <option value="supply">Supply</option>
+          <option value="buildtime">Build time</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <!-- Left: main cards -->
+      <section class="lg:col-span-9">
+        <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3"></div>
+
+        <!-- Extras Gallery -->
+        <details class="mt-6 border rounded-lg p-3 bg-slate-50 dark:bg-slate-900/40">
+          <summary class="cursor-pointer font-semibold">Extras Gallery (Unmapped Assets)</summary>
+          <div id="extrasWrap" class="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+        </details>
+      </section>
+
+      <!-- Right: Build order + charts -->
+      <aside class="lg:col-span-3">
+        <div class="sticky top-24 space-y-4">
+          <div class="card rounded-xl border shadow-sm p-3">
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="font-semibold">Build Order</h2>
+              <div class="text-xs text-slate-500">Drag to reorder</div>
+            </div>
+            <ul id="buildList" class="space-y-2 min-h-[80px]"></ul>
+            <div class="mt-3 text-sm grid grid-cols-3 gap-2">
+              <div class="p-2 rounded border">
+                <div class="text-xs text-slate-500">Mineral</div>
+                <div id="totMineral" class="font-semibold">0</div>
+              </div>
+              <div class="p-2 rounded border">
+                <div class="text-xs text-slate-500">Gas</div>
+                <div id="totGas" class="font-semibold">0</div>
+              </div>
+              <div class="p-2 rounded border">
+                <div class="text-xs text-slate-500">Supply</div>
+                <div id="totSupply" class="font-semibold">0</div>
+              </div>
+            </div>
+            <div id="buildWarnings" class="mt-2 text-xs text-amber-600"></div>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button id="clearBuild" class="px-3 py-1 rounded border text-sm">Clear</button>
+              <button id="copyText" class="px-3 py-1 rounded border text-sm">Copy (text)</button>
+              <button id="copyJson" class="px-3 py-1 rounded border text-sm">Copy (JSON)</button>
+            </div>
+          </div>
+
+          <div class="card rounded-xl border shadow-sm p-3">
+            <div class="mb-2 flex items-center justify-between">
+              <h3 class="font-semibold">Build Analysis</h3>
+              <span class="text-xs text-slate-500">D3 charts</span>
+            </div>
+            <div class="space-y-3">
+              <div>
+                <div class="text-xs text-slate-500 mb-1">Cumulative Supply vs Step</div>
+                <svg id="chartSupply" class="w-full h-32"></svg>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500 mb-1">Cumulative Mineral & Gas</div>
+                <svg id="chartRes" class="w-full h-32"></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Card Template -->
+  <template id="cardTpl">
+    <article class="card rounded-xl border shadow-sm overflow-hidden">
+      <div class="relative">
+        <img loading="lazy" class="w-full aspect-video object-cover img-zoom card-img"
+             src="" alt="Entity image" />
+        <button class="openLightbox absolute bottom-2 right-2 text-xs px-2 py-1 rounded bg-black/60 text-white hover:bg-black/80">
+          Zoom
+        </button>
+      </div>
+      <div class="p-3">
+        <div class="flex items-start justify-between gap-2">
+          <h3 class="font-semibold truncate title"></h3>
+          <button class="addBtn text-xs px-2 py-1 rounded border">Add</button>
+        </div>
+        <div class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+          <div><span class="text-slate-500">Mineral:</span> <span data-key="mineral">-</span></div>
+          <div><span class="text-slate-500">Gas:</span> <span data-key="gas">-</span></div>
+          <div><span class="text-slate-500">Supply:</span> <span data-key="supply">-</span></div>
+          <div><span class="text-slate-500">Build:</span> <span data-key="buildtime">-</span></div>
+        </div>
+        <div class="mt-3">
+          <div class="text-xs text-slate-500 mb-1">Requirements</div>
+          <div class="flex flex-wrap gap-1 reqs"></div>
+          <div class="mt-2 hidden techTree text-xs"></div>
+        </div>
+        <div class="mt-3 flex gap-2">
+          <button class="px-2 py-1 text-xs border rounded toggleTree">Tech Tree</button>
+          <button class="px-2 py-1 text-xs border rounded jumpDeps">Highlight prereqs</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <!-- Lightbox Modal -->
+  <div id="lightbox"
+       class="fixed inset-0 hidden items-center justify-center bg-black/80 z-50 p-4">
+    <img id="lightboxImg"
+         class="max-h-[85vh] max-w-[85vw] rounded shadow-2xl"
+         alt="Full size image" />
+  </div>
+
+  <!-- Main application entry point -->
+  <script type="module" src="/src/main.js"></script>
+
+</body>
+</html>
