@@ -66,7 +66,11 @@ export function detectCycles(graph) {
         component.push(w);
       } while (w !== v);
 
-      if (component.length > 1) {
+      // Check for multi-node cycles or self-loops
+      const hasSelfLoop = component.length === 1 &&
+                          (graph.get(component[0]) || []).includes(component[0]);
+
+      if (component.length > 1 || hasSelfLoop) {
         cycles.push(component);
         logger.warn('Cycle detected:', component);
       }
@@ -94,14 +98,31 @@ export function topologicalSort(graph) {
 
   // Initialize in-degrees
   for (const node of graph.keys()) {
-    if (!inDegree.has(node)) inDegree.set(node, 0);
+    inDegree.set(node, 0);
   }
 
-  // Calculate in-degrees
+  // Build reverse graph for correct in-degree calculation
+  // If A depends on B, then edge is B->A, so A's in-degree increases
+  const reverseGraph = new Map();
+  for (const node of graph.keys()) {
+    reverseGraph.set(node, []);
+  }
+
   for (const [node, deps] of graph) {
     for (const dep of deps) {
-      inDegree.set(dep, (inDegree.get(dep) || 0) + 1);
+      // Ensure dep exists in reverse graph
+      if (!reverseGraph.has(dep)) {
+        reverseGraph.set(dep, []);
+        inDegree.set(dep, 0);
+      }
+      // dep -> node edge in reverse graph
+      reverseGraph.get(dep).push(node);
     }
+  }
+
+  // Calculate in-degrees from reverse graph
+  for (const [node, dependents] of reverseGraph) {
+    inDegree.set(node, (graph.get(node) || []).length);
   }
 
   // Find nodes with no dependencies
@@ -116,17 +137,19 @@ export function topologicalSort(graph) {
     const node = queue.shift();
     result.push(node);
 
-    const neighbors = graph.get(node) || [];
-    for (const neighbor of neighbors) {
-      inDegree.set(neighbor, inDegree.get(neighbor) - 1);
-      if (inDegree.get(neighbor) === 0) {
-        queue.push(neighbor);
+    // Process nodes that depend on current node (use reverse graph)
+    const dependents = reverseGraph.get(node) || [];
+    for (const dependent of dependents) {
+      inDegree.set(dependent, inDegree.get(dependent) - 1);
+      if (inDegree.get(dependent) === 0) {
+        queue.push(dependent);
       }
     }
   }
 
   // If result doesn't contain all nodes, there's a cycle
-  if (result.length !== graph.size) {
+  const totalNodes = inDegree.size;
+  if (result.length !== totalNodes) {
     logger.error('Topological sort failed: cycle detected');
     return null;
   }

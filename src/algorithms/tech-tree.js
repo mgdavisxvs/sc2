@@ -25,6 +25,7 @@ export function buildTechTree(gameData, race) {
   const nodes = [];
   const edges = [];
   const nodeMap = new Map();
+  const nodeByName = new Map(); // O(1) lookup by name
 
   // Collect all entities (units, buildings, upgrades)
   ['units', 'buildings', 'upgrades'].forEach(category => {
@@ -46,15 +47,16 @@ export function buildTechTree(gameData, race) {
 
       nodes.push(node);
       nodeMap.set(node.id, node);
+      nodeByName.set(node.name, node); // Add name-based index
     });
   });
 
-  // Build edges based on prerequisites
+  // Build edges based on prerequisites - O(V + E) instead of O(E × V)
   nodes.forEach(node => {
     if (node.prerequisites && node.prerequisites.length > 0) {
       node.prerequisites.forEach(prereqName => {
-        // Find the prerequisite node
-        const prereqNode = nodes.find(n => n.name === prereqName);
+        // O(1) lookup by name instead of O(n) find
+        const prereqNode = nodeByName.get(prereqName);
         if (prereqNode) {
           edges.push({
             from: prereqNode.id,
@@ -68,13 +70,14 @@ export function buildTechTree(gameData, race) {
   });
 
   // Calculate tech tiers (topological levels)
-  const tiers = calculateTechTiers(nodes, edges);
+  const tiers = calculateTechTiers(nodes, edges, nodeByName);
 
   return {
     nodes,
     edges,
     tiers,
     nodeMap,
+    nodeByName, // Add for O(1) name-based lookups
   };
 }
 
@@ -82,9 +85,10 @@ export function buildTechTree(gameData, race) {
  * Calculate tech tiers (levels) for visualization
  * @param {Array} nodes - Tech tree nodes
  * @param {Array} edges - Tech tree edges
+ * @param {Map} nodeByName - Name-based node index for O(1) lookup
  * @returns {Object} Tier assignments
  */
-function calculateTechTiers(nodes, edges) {
+function calculateTechTiers(nodes, edges, nodeByName) {
   const tiers = {};
   const tierAssignments = new Map();
 
@@ -110,7 +114,8 @@ function calculateTechTiers(nodes, edges) {
       // Check if all prerequisites are assigned to lower tiers
       const prereqTiers = node.prerequisites
         .map(prereqName => {
-          const prereqNode = nodes.find(n => n.name === prereqName);
+          // O(1) lookup instead of O(n) find
+          const prereqNode = nodeByName.get(prereqName);
           return prereqNode ? tierAssignments.get(prereqNode.id) : null;
         })
         .filter(t => t !== null && t !== undefined);
@@ -223,7 +228,8 @@ export function findPrerequisitePath(techTree, targetNodeId, buildOrder) {
 
     // Add prerequisite nodes to queue
     missingPrereqs.forEach(prereqName => {
-      const prereqNode = techTree.nodes.find(n => n.name === prereqName);
+      // O(1) lookup instead of O(n) find
+      const prereqNode = techTree.nodeByName.get(prereqName);
       if (prereqNode && !visited.has(prereqNode.id)) {
         queue.push([prereqNode, ...currentPath]);
       }
@@ -326,7 +332,7 @@ export function getCriticalPath(techTree) {
   while (currentNode.prerequisites && currentNode.prerequisites.length > 0) {
     // Find prerequisite with highest tier
     const prereqNodes = currentNode.prerequisites
-      .map(prereqName => techTree.nodes.find(n => n.name === prereqName))
+      .map(prereqName => techTree.nodeByName.get(prereqName)) // O(1) lookup
       .filter(Boolean);
 
     if (prereqNodes.length === 0) break;

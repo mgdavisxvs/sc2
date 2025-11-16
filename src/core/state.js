@@ -29,12 +29,25 @@ class AppState {
    * Subscribe to state changes
    * @param {string} key - State key to watch
    * @param {Function} callback - Function to call on change
+   * @returns {Function} Unsubscribe function
    */
   subscribe(key, callback) {
     if (!this._listeners.has(key)) {
-      this._listeners.set(key, []);
+      this._listeners.set(key, new Set());
     }
-    this._listeners.get(key).push(callback);
+    this._listeners.get(key).add(callback);
+
+    // Return unsubscribe function to prevent memory leaks
+    return () => {
+      const listeners = this._listeners.get(key);
+      if (listeners) {
+        listeners.delete(callback);
+        // Clean up empty listener sets
+        if (listeners.size === 0) {
+          this._listeners.delete(key);
+        }
+      }
+    };
   }
 
   /**
@@ -43,8 +56,10 @@ class AppState {
    * @param {*} value - New value
    */
   _notify(key, value) {
-    const listeners = this._listeners.get(key) || [];
-    listeners.forEach(fn => fn(value));
+    const listeners = this._listeners.get(key);
+    if (listeners) {
+      listeners.forEach(fn => fn(value));
+    }
   }
 
   /**

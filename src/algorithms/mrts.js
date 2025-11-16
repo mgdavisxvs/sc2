@@ -7,6 +7,9 @@
 
 import { logger } from '../core/logger.js';
 
+// Numerical tolerance for floating-point comparisons
+const EPSILON = 1e-10;
+
 /**
  * Calculate MRTS between two inputs
  * @param {Array} builds - Array of builds representing isoquant points
@@ -35,7 +38,8 @@ export function calculateMRTS(builds, input1, input2) {
     const delta1 = getInputValue(curr, input1) - getInputValue(prev, input1);
     const delta2 = getInputValue(curr, input2) - getInputValue(prev, input2);
 
-    if (delta1 !== 0) {
+    // Use epsilon for numerical stability (avoid division by near-zero)
+    if (Math.abs(delta1) > EPSILON) {
       const mrts = -delta2 / delta1;
 
       mrtsPoints.push({
