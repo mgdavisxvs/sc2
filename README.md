@@ -268,9 +268,34 @@ describe('Build Order Validation', () => {
 
 ## 🚀 Getting Started
 
+### 🎯 Quick Start (Automated - Recommended)
+
+**Fastest way to run the app** - no manual setup required:
+
+#### Linux / macOS:
+```bash
+./start.sh
+```
+
+#### Windows:
+```batch
+start.bat
+```
+
+The automated scripts will:
+- ✅ Check for dependencies (Node.js, Python, etc.)
+- ✅ Install a development server if needed
+- ✅ Start the server on port 8080
+- ✅ Open your browser automatically
+
+**See [QUICK_START.md](./QUICK_START.md) for detailed instructions and troubleshooting.**
+
+---
+
 ### Prerequisites
 - Node.js 18+ (for development)
 - OR just a modern browser (for production build)
+- OR Python 3 (for simple HTTP server)
 
 ### Development
 
@@ -306,9 +331,20 @@ npm run preview
 
 The build output goes to `dist/` and can be served by any static file server.
 
-### No Build System (Legacy)
+### No Build System (Alternative)
 
-You can still use the old `sc2json.html` if you prefer zero dependencies. The new modular version requires a build step.
+**Don't want to use npm?** The automated scripts (`start.sh` / `start.bat`) can run the app using just Python (no Node.js required). They will automatically detect and use the best available server.
+
+Alternatively, manually serve the app with any static file server:
+
+```bash
+# Python 3 (no installation needed)
+python3 -m http.server 8080
+
+# Then open: http://localhost:8080
+```
+
+The app uses ES6 modules, so it must be served via HTTP (not opened as `file://`).
 
 ---
 
