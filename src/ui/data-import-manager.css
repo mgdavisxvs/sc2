@@ -1025,3 +1025,264 @@ html[data-theme="dark"] .import-progress-enhanced {
 html[data-theme="dark"] .changes-list {
   background: #0f172a;
 }
+
+/* ========================================
+   Undo & Manage Entities Buttons
+   ======================================== */
+
+.history-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.btn-undo {
+  flex: 1;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #FF9800, #F57C00);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.btn-undo:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(245, 124, 0, 0.3);
+}
+
+.btn-undo:active {
+  transform: translateY(0);
+}
+
+.btn-manage {
+  flex: 1;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.btn-manage:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(25, 118, 210, 0.3);
+}
+
+.btn-manage:active {
+  transform: translateY(0);
+}
+
+/* ========================================
+   Entity Browser
+   ======================================== */
+
+.entity-browser {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 400px;
+}
+
+.search-box {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid #2196F3;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #2196F3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.entity-list {
+  overflow-y: auto;
+  max-height: 500px;
+}
+
+.no-entities {
+  text-align: center;
+  padding: 40px 20px;
+  color: #757575;
+  font-size: 16px;
+}
+
+/* ========================================
+   Entity Table
+   ======================================== */
+
+.entity-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.entity-table thead {
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: white;
+}
+
+.entity-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.entity-table tbody tr {
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s ease;
+}
+
+.entity-table tbody tr:hover {
+  background: #f5f5f5;
+}
+
+.entity-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.entity-table td {
+  padding: 12px 16px;
+  font-size: 14px;
+}
+
+.entity-table td:nth-child(1) {
+  font-weight: 600;
+  color: #1976D2;
+}
+
+.entity-table td:nth-child(2) {
+  text-transform: capitalize;
+  color: #757575;
+}
+
+.entity-table td:nth-child(3) {
+  text-transform: capitalize;
+  color: #757575;
+  font-size: 13px;
+}
+
+.entity-table td:nth-child(4) {
+  font-family: 'Courier New', monospace;
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+.entity-table td:nth-child(5) {
+  display: flex;
+  gap: 8px;
+}
+
+/* ========================================
+   Small Buttons (Edit/Delete)
+   ======================================== */
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+}
+
+.btn-edit {
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: white;
+}
+
+.btn-edit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(25, 118, 210, 0.3);
+}
+
+.btn-delete {
+  background: linear-gradient(135deg, #f44336, #d32f2f);
+  color: white;
+}
+
+.btn-delete:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(211, 47, 47, 0.3);
+}
+
+.btn-small:active {
+  transform: translateY(0);
+}
+
+/* ========================================
+   Dark Mode - New Components
+   ======================================== */
+
+html[data-theme="dark"] .history-actions {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border-color: #334155;
+}
+
+html[data-theme="dark"] .search-box {
+  background: #1e293b;
+  border-color: #1976D2;
+}
+
+html[data-theme="dark"] .search-box input {
+  background: #0f172a;
+  border-color: #334155;
+  color: #e5e7eb;
+}
+
+html[data-theme="dark"] .entity-table {
+  background: #1e293b;
+}
+
+html[data-theme="dark"] .entity-table tbody tr {
+  border-bottom-color: #334155;
+}
+
+html[data-theme="dark"] .entity-table tbody tr:hover {
+  background: #0f172a;
+}
+
+html[data-theme="dark"] .entity-table td:nth-child(1) {
+  color: #60a5fa;
+}
+
+html[data-theme="dark"] .entity-table td:nth-child(2),
+html[data-theme="dark"] .entity-table td:nth-child(3) {
+  color: #9ca3af;
+}
+
+html[data-theme="dark"] .no-entities {
+  color: #9ca3af;
+}

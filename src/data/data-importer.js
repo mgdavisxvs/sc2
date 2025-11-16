@@ -356,6 +356,10 @@ export class DataImporter {
    */
   async importData(data, source = 'unknown', metadata = {}) {
     try {
+      // Store backup before importing (for undo)
+      const existingData = await this.cache.getGameData() || {};
+      await this.storeBackup(existingData);
+
       // Sanitize data
       const sanitized = sanitizeGameData(data);
 
@@ -374,7 +378,6 @@ export class DataImporter {
       const stats = getDataStatistics(sanitized);
 
       // Merge with existing data
-      const existingData = await this.cache.getGameData() || {};
       const mergedData = this.mergeGameData(existingData.data || {}, sanitized);
 
       // Save to cache
@@ -482,6 +485,233 @@ export class DataImporter {
   async clearData() {
     await this.cache.setGameData({}, '0.0.0');
     this.emit('data-cleared');
+  }
+
+  /**
+   * Store backup of data for undo functionality
+   * Keeps last 3 backups
+   */
+  async storeBackup(data) {
+    try {
+      const backups = await this.cache.get('data-backups') || [];
+
+      backups.unshift({
+        data: data.data,
+        version: data.version,
+        timestamp: Date.now()
+      });
+
+      // Keep only last 3 backups
+      if (backups.length > 3) {
+        backups.length = 3;
+      }
+
+      await this.cache.set('data-backups', backups, Infinity);
+    } catch (error) {
+      console.error('Failed to store backup:', error);
+    }
+  }
+
+  /**
+   * Undo last import by restoring previous backup
+   */
+  async undoLastImport() {
+    try {
+      const backups = await this.cache.get('data-backups') || [];
+
+      if (backups.length === 0) {
+        throw new Error('No backups available');
+      }
+
+      const backup = backups[0];
+      await this.cache.setGameData(backup.data, backup.version);
+
+      // Remove used backup
+      backups.shift();
+      await this.cache.set('data-backups', backups, Infinity);
+
+      this.emit('data-restored', backup);
+
+      return {
+        success: true,
+        timestamp: backup.timestamp,
+        version: backup.version
+      };
+    } catch (error) {
+      throw new ImportError(
+        'Failed to undo import',
+        'undo',
+        { error: error.message }
+      );
+    }
+  }
+
+  /**
+   * Get all entities from current data
+   *
+   * @returns {Promise<Array>} - Array of entities with metadata
+   */
+  async getAllEntities() {
+    const data = await this.exportData();
+    const entities = [];
+
+    ['protoss', 'terran', 'zerg'].forEach(race => {
+      if (!data[race]) return;
+
+      ['units', 'buildings', 'upgrades'].forEach(entityType => {
+        if (!data[race][entityType]) return;
+
+        Object.entries(data[race][entityType]).forEach(([key, entity]) => {
+          entities.push({
+            key,
+            race,
+            entityType,
+            data: entity,
+            name: entity.name || key
+          });
+        });
+      });
+    });
+
+    return entities;
+  }
+
+  /**
+   * Search entities by name or key
+   *
+   * @param {string} query - Search query
+   * @returns {Promise<Array>} - Matching entities
+   */
+  async searchEntities(query) {
+    const allEntities = await this.getAllEntities();
+    const lowerQuery = query.toLowerCase();
+
+    return allEntities.filter(entity => {
+      return entity.key.toLowerCase().includes(lowerQuery) ||
+             entity.name.toLowerCase().includes(lowerQuery);
+    });
+  }
+
+  /**
+   * Update an existing entity
+   *
+   * @param {string} race - Race (protoss, terran, zerg)
+   * @param {string} entityType - Entity type (units, buildings, upgrades)
+   * @param {string} key - Entity key
+   * @param {Object} entityData - Updated entity data
+   * @returns {Promise<Object>} - Update result
+   */
+  async updateEntity(race, entityType, key, entityData) {
+    try {
+      const cached = await this.cache.getGameData();
+      const data = cached?.data || {};
+
+      // Store backup before updating
+      await this.storeBackup(cached);
+
+      // Ensure structure exists
+      if (!data[race]) data[race] = {};
+      if (!data[race][entityType]) data[race][entityType] = {};
+
+      // Validate the entity data
+      const tempData = {
+        [race]: {
+          [entityType]: {
+            [key]: entityData
+          }
+        }
+      };
+
+      const validation = validateGameData(tempData);
+      if (!validation.valid) {
+        throw new ImportError(
+          'Entity validation failed',
+          'update',
+          { errors: validation.errors }
+        );
+      }
+
+      // Update entity
+      data[race][entityType][key] = entityData;
+
+      // Save to cache
+      await this.cache.setGameData(data, cached?.version || 'unknown');
+
+      // Add to history
+      const result = {
+        success: true,
+        source: 'update',
+        stats: { updated: 1 },
+        version: cached?.version
+      };
+      await this.addToHistory('update', result);
+
+      this.emit('entity-updated', { race, entityType, key, data: entityData });
+
+      return result;
+    } catch (error) {
+      throw new ImportError(
+        `Failed to update entity ${key}`,
+        'update',
+        { error: error.message, race, entityType, key }
+      );
+    }
+  }
+
+  /**
+   * Delete an entity
+   *
+   * @param {string} race - Race (protoss, terran, zerg)
+   * @param {string} entityType - Entity type (units, buildings, upgrades)
+   * @param {string} key - Entity key
+   * @returns {Promise<Object>} - Delete result
+   */
+  async deleteEntity(race, entityType, key) {
+    try {
+      const cached = await this.cache.getGameData();
+      const data = cached?.data || {};
+
+      // Store backup before deleting
+      await this.storeBackup(cached);
+
+      // Check if entity exists
+      if (!data[race]?.[entityType]?.[key]) {
+        throw new Error('Entity not found');
+      }
+
+      // Delete entity
+      delete data[race][entityType][key];
+
+      // Clean up empty objects
+      if (Object.keys(data[race][entityType]).length === 0) {
+        delete data[race][entityType];
+      }
+      if (Object.keys(data[race]).length === 0) {
+        delete data[race];
+      }
+
+      // Save to cache
+      await this.cache.setGameData(data, cached?.version || 'unknown');
+
+      // Add to history
+      const result = {
+        success: true,
+        source: 'delete',
+        stats: { deleted: 1 },
+        version: cached?.version
+      };
+      await this.addToHistory('delete', result);
+
+      this.emit('entity-deleted', { race, entityType, key });
+
+      return result;
+    } catch (error) {
+      throw new ImportError(
+        `Failed to delete entity ${key}`,
+        'delete',
+        { error: error.message, race, entityType, key }
+      );
+    }
   }
 
   /**

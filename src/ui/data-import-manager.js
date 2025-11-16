@@ -948,26 +948,43 @@ export function createDataImportManager(container) {
       return;
     }
 
-    historyContainer.innerHTML = history.slice(0, 10).map(entry => {
-      const date = new Date(entry.timestamp);
-      const status = entry.success ? '✓' : '✗';
-      const statusClass = entry.success ? 'success' : 'error';
+    historyContainer.innerHTML = `
+      <div class="history-actions">
+        <button class="btn-undo" id="undoLastImport" title="Undo last import/edit/delete">
+          ↶ Undo Last Import
+        </button>
+        <button class="btn-manage" id="manageEntities" title="Browse, edit, and delete entities">
+          ⚙ Manage Entities
+        </button>
+      </div>
+      ${history.slice(0, 10).map(entry => {
+        const date = new Date(entry.timestamp);
+        const status = entry.success ? '✓' : '✗';
+        const statusClass = entry.success ? 'success' : 'error';
 
-      return `
-        <div class="history-item ${statusClass}">
-          <span class="history-status">${status}</span>
-          <span class="history-source">${entry.source}</span>
-          <span class="history-time">${date.toLocaleString()}</span>
-          ${entry.stats ? `
-            <span class="history-stats">
-              ${entry.stats.totals.units}U /
-              ${entry.stats.totals.buildings}B /
-              ${entry.stats.totals.upgrades}Up
-            </span>
-          ` : ''}
-        </div>
-      `;
-    }).join('');
+        return `
+          <div class="history-item ${statusClass}">
+            <span class="history-status">${status}</span>
+            <span class="history-source">${entry.source}</span>
+            <span class="history-time">${date.toLocaleString()}</span>
+            ${entry.stats ? `
+              <span class="history-stats">
+                ${entry.stats.totals.units}U /
+                ${entry.stats.totals.buildings}B /
+                ${entry.stats.totals.upgrades}Up
+              </span>
+            ` : ''}
+          </div>
+        `;
+      }).join('')}
+    `;
+
+    // Attach event listeners
+    const undoBtn = container.querySelector('#undoLastImport');
+    const manageBtn = container.querySelector('#manageEntities');
+
+    undoBtn?.addEventListener('click', handleUndoLastImport);
+    manageBtn?.addEventListener('click', showEntityBrowser);
   }
 
   /**
@@ -1070,6 +1087,289 @@ export function createDataImportManager(container) {
     return modal;
   }
 
+  /**
+   * Handle undo last import
+   */
+  async function handleUndoLastImport() {
+    try {
+      setEnhancedProgress(true, 'Undoing last import...');
+
+      const result = await dataImporter.undoLastImport();
+
+      setEnhancedProgress(false);
+
+      showNotification('Successfully undone last import', 'success');
+      updateDataStats();
+      updateHistory();
+    } catch (error) {
+      setEnhancedProgress(false);
+      showNotification(error.message || 'Failed to undo import', 'error');
+    }
+  }
+
+  /**
+   * Show entity browser/manager
+   */
+  async function showEntityBrowser() {
+    try {
+      const entities = await dataImporter.getAllEntities();
+
+      if (entities.length === 0) {
+        showNotification('No entities to manage. Import data first.', 'info');
+        return;
+      }
+
+      const modal = createModal('Manage Entities', `
+        <div class="entity-browser">
+          <div class="search-box">
+            <input type="text" id="entitySearch" class="form-control"
+                   placeholder="Search entities by name...">
+          </div>
+
+          <div class="entity-list" id="entityList">
+            ${renderEntityList(entities)}
+          </div>
+        </div>
+      `, 'large');
+
+      const searchInput = modal.querySelector('#entitySearch');
+      const entityList = modal.querySelector('#entityList');
+
+      searchInput?.addEventListener('input', async (e) => {
+        const query = e.target.value.trim();
+        if (query.length >= 2) {
+          const filtered = await dataImporter.searchEntities(query);
+          entityList.innerHTML = renderEntityList(filtered);
+          attachEntityListListeners(modal);
+        } else {
+          entityList.innerHTML = renderEntityList(entities);
+          attachEntityListListeners(modal);
+        }
+      });
+
+      attachEntityListListeners(modal);
+    } catch (error) {
+      showNotification(error.message || 'Failed to load entities', 'error');
+    }
+  }
+
+  /**
+   * Render entity list HTML
+   */
+  function renderEntityList(entities) {
+    if (entities.length === 0) {
+      return '<div class="no-entities">No entities found</div>';
+    }
+
+    return `
+      <table class="entity-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Race</th>
+            <th>Type</th>
+            <th>Cost</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${entities.map(entity => `
+            <tr data-key="${entity.key}" data-race="${entity.race}" data-type="${entity.entityType}">
+              <td>${entity.name}</td>
+              <td>${entity.race}</td>
+              <td>${entity.entityType}</td>
+              <td>${entity.data.cost ? `${entity.data.cost.mineral}m ${entity.data.cost.gas}g` : '-'}</td>
+              <td>
+                <button class="btn-small btn-edit" title="Edit">✏️ Edit</button>
+                <button class="btn-small btn-delete" title="Delete">🗑️ Delete</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  /**
+   * Attach event listeners to entity list
+   */
+  function attachEntityListListeners(modal) {
+    const editButtons = modal.querySelectorAll('.btn-edit');
+    const deleteButtons = modal.querySelectorAll('.btn-delete');
+
+    editButtons.forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const row = e.target.closest('tr');
+        const key = row.dataset.key;
+        const race = row.dataset.race;
+        const type = row.dataset.type;
+
+        modal.remove();
+        await showEditEntityDialog(race, type, key);
+      });
+    });
+
+    deleteButtons.forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const row = e.target.closest('tr');
+        const key = row.dataset.key;
+        const race = row.dataset.race;
+        const type = row.dataset.type;
+        const name = row.querySelector('td:first-child').textContent;
+
+        const confirmed = confirm(`Delete ${name} from ${race} ${type}?`);
+        if (confirmed) {
+          await handleDeleteEntity(race, type, key);
+          modal.remove();
+          showEntityBrowser(); // Refresh the browser
+        }
+      });
+    });
+  }
+
+  /**
+   * Show edit entity dialog
+   */
+  async function showEditEntityDialog(race, entityType, key) {
+    try {
+      const data = await dataImporter.exportData();
+      const entity = data[race]?.[entityType]?.[key];
+
+      if (!entity) {
+        showNotification('Entity not found', 'error');
+        return;
+      }
+
+      const modal = createModal('Edit Entity', `
+        <div class="form-group">
+          <label>Race:</label>
+          <input type="text" class="form-control" value="${race}" disabled>
+        </div>
+
+        <div class="form-group">
+          <label>Type:</label>
+          <input type="text" class="form-control" value="${entityType}" disabled>
+        </div>
+
+        <div class="form-group">
+          <label>Key:</label>
+          <input type="text" class="form-control" value="${key}" disabled>
+        </div>
+
+        <div class="form-group">
+          <label for="editEntityName">Name:</label>
+          <input type="text" id="editEntityName" class="form-control"
+                 value="${entity.name || key}">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editEntityMineral">Minerals:</label>
+            <input type="number" id="editEntityMineral" class="form-control"
+                   value="${entity.cost?.mineral || 0}" min="0">
+          </div>
+          <div class="form-group">
+            <label for="editEntityGas">Gas:</label>
+            <input type="number" id="editEntityGas" class="form-control"
+                   value="${entity.cost?.gas || 0}" min="0">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editEntityTime">Build Time (s):</label>
+            <input type="number" id="editEntityTime" class="form-control"
+                   value="${entity.time || 0}" min="0">
+          </div>
+          <div class="form-group">
+            <label for="editEntitySupply">Supply:</label>
+            <input type="number" id="editEntitySupply" class="form-control"
+                   value="${entity.supply?.required || 0}" min="0">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="editEntityRequires">Requirements (comma-separated):</label>
+          <input type="text" id="editEntityRequires" class="form-control"
+                 value="${entity.tech_tree?.requires?.join(', ') || ''}">
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelBtn">Cancel</button>
+          <button class="btn-primary" id="saveBtn">Save Changes</button>
+        </div>
+      `, 'large');
+
+      const saveBtn = modal.querySelector('#saveBtn');
+      const cancelBtn = modal.querySelector('#cancelBtn');
+
+      saveBtn.addEventListener('click', async () => {
+        const updatedEntity = {
+          name: modal.querySelector('#editEntityName').value.trim(),
+          cost: {
+            mineral: parseInt(modal.querySelector('#editEntityMineral').value) || 0,
+            gas: parseInt(modal.querySelector('#editEntityGas').value) || 0
+          },
+          time: parseInt(modal.querySelector('#editEntityTime').value) || 0,
+          supply: {
+            required: parseInt(modal.querySelector('#editEntitySupply').value) || 0
+          },
+          tech_tree: {
+            requires: modal.querySelector('#editEntityRequires').value
+              .split(',')
+              .map(r => r.trim())
+              .filter(r => r)
+          }
+        };
+
+        modal.remove();
+        await handleUpdateEntity(race, entityType, key, updatedEntity);
+      });
+
+      cancelBtn.addEventListener('click', () => modal.remove());
+    } catch (error) {
+      showNotification(error.message || 'Failed to load entity', 'error');
+    }
+  }
+
+  /**
+   * Handle entity update
+   */
+  async function handleUpdateEntity(race, entityType, key, entityData) {
+    try {
+      setEnhancedProgress(true, 'Updating entity...');
+
+      await dataImporter.updateEntity(race, entityType, key, entityData);
+
+      setEnhancedProgress(false);
+      showNotification('Entity updated successfully', 'success');
+      updateDataStats();
+      updateHistory();
+    } catch (error) {
+      setEnhancedProgress(false);
+      showNotification(error.message || 'Failed to update entity', 'error');
+    }
+  }
+
+  /**
+   * Handle entity deletion
+   */
+  async function handleDeleteEntity(race, entityType, key) {
+    try {
+      setEnhancedProgress(true, 'Deleting entity...');
+
+      await dataImporter.deleteEntity(race, entityType, key);
+
+      setEnhancedProgress(false);
+      showNotification('Entity deleted successfully', 'success');
+      updateDataStats();
+      updateHistory();
+    } catch (error) {
+      setEnhancedProgress(false);
+      showNotification(error.message || 'Failed to delete entity', 'error');
+    }
+  }
+
   // Subscribe to importer events
   dataImporter.on('import-success', () => {
     updateDataStats();
@@ -1077,6 +1377,18 @@ export function createDataImportManager(container) {
   });
 
   dataImporter.on('data-cleared', () => {
+    updateDataStats();
+  });
+
+  dataImporter.on('entity-updated', () => {
+    updateDataStats();
+  });
+
+  dataImporter.on('entity-deleted', () => {
+    updateDataStats();
+  });
+
+  dataImporter.on('data-restored', () => {
     updateDataStats();
   });
 
