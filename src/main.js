@@ -488,6 +488,56 @@ function initEventHandlers() {
     }
   });
 
+  // Open data import manager
+  let dataManagerController = null;
+  $('#openDataManager')?.addEventListener('click', async () => {
+    const modal = $('#dataManagerModal');
+    const container = $('#dataManagerContainer');
+
+    if (!modal || !container) {
+      showStatus('Data manager modal not found', 'error');
+      return;
+    }
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    try {
+      // Dynamically import the data manager UI
+      const { createDataImportManager } = await import('./ui/data-import-manager.js');
+
+      // Create the data manager UI
+      dataManagerController = createDataImportManager(container);
+
+      showStatus('Data Import Manager opened', 'success');
+    } catch (err) {
+      logger.error('Data manager error:', err);
+      showStatus('Failed to open data manager: ' + err.message, 'error', 4000);
+    }
+  });
+
+  // Close data import manager modal
+  $('#closeDataManager')?.addEventListener('click', () => {
+    const modal = $('#dataManagerModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+
+      // Clean up data manager controller
+      if (dataManagerController) {
+        dataManagerController.destroy();
+        dataManagerController = null;
+      }
+
+      // Reload data after import (if needed)
+      const fileInput = $('#fileInput');
+      if (fileInput) {
+        // Trigger a reload if data was imported
+        showStatus('Tip: Reload JSON to see imported data', 'info', 3000);
+      }
+    }
+  });
+
   // Auto build
   $('#autoBuild')?.addEventListener('click', () => {
     if (!state.data) {
