@@ -1,20 +1,19 @@
 /**
- * Data Import Manager UI
+ * Enhanced Data Import Manager UI
  *
- * Comprehensive UI for importing SC2 game data from multiple sources:
- * 1. File upload (JSON)
- * 2. URL import
- * 3. Liquipedia scraping
- * 4. Community APIs
- * 5. Balance patch updates
- * 6. Manual data entry
+ * NEW FEATURES:
+ * 1. Drag & Drop File Upload
+ * 2. Import Preview Dialog
+ * 3. Visual Validation Error Display
+ * 4. Import from Clipboard
+ * 5. Real-time Scraping Progress
  */
 
 import { dataImporter } from '../data/data-importer.js';
-import { getDataStatistics } from '../data/data-validator.js';
+import { getDataStatistics, validateGameData, sanitizeGameData } from '../data/data-validator.js';
 
 /**
- * Create Data Import Manager UI
+ * Create Enhanced Data Import Manager UI
  *
  * @param {HTMLElement} container - Container element
  * @returns {Object} - Manager interface
@@ -22,6 +21,7 @@ import { getDataStatistics } from '../data/data-validator.js';
 export function createDataImportManager(container) {
   let currentView = 'main';
   let importInProgress = false;
+  let scrapingProgress = {};
 
   // Initialize importer
   dataImporter.init().catch(error => {
@@ -34,16 +34,29 @@ export function createDataImportManager(container) {
   function renderMainView() {
     container.innerHTML = `
       <div class="data-import-manager">
+        <!-- Drag & Drop Overlay -->
+        <div class="drag-drop-overlay" id="dragDropOverlay">
+          <div class="drag-drop-content">
+            <div class="drag-drop-icon">📁</div>
+            <div class="drag-drop-text">Drop JSON file to import</div>
+          </div>
+        </div>
+
         <div class="import-header">
           <h2>SC2 Data Import Manager</h2>
-          <button class="btn-export" id="exportDataBtn">Export Current Data</button>
+          <div class="header-actions">
+            <button class="btn-clipboard" id="pasteBtn" title="Paste JSON from clipboard (Ctrl/Cmd+V)">
+              📋 Paste JSON
+            </button>
+            <button class="btn-export" id="exportDataBtn">Export Current Data</button>
+          </div>
         </div>
 
         <div class="import-methods">
           <div class="import-method-card" data-method="file">
             <div class="method-icon">📁</div>
             <h3>File Upload</h3>
-            <p>Import from local JSON file</p>
+            <p>Drop file or click to browse</p>
             <button class="btn-primary">Choose File</button>
           </div>
 
@@ -93,21 +106,97 @@ export function createDataImportManager(container) {
           <div id="historyList">No imports yet</div>
         </div>
 
-        <div class="import-progress" id="importProgress" style="display: none;">
-          <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
+        <!-- Enhanced Progress Display -->
+        <div class="import-progress-enhanced" id="importProgressEnhanced" style="display: none;">
+          <div class="progress-header">
+            <span class="progress-title" id="progressTitle">Importing...</span>
+            <button class="btn-close-progress" id="closeProgress">✕</button>
           </div>
-          <div class="progress-message" id="progressMessage"></div>
+          <div id="progressContent"></div>
         </div>
       </div>
     `;
 
     // Attach event listeners
     attachMainViewListeners();
+    setupDragAndDrop();
+    setupKeyboardShortcuts();
 
     // Load and display stats
     updateDataStats();
     updateHistory();
+  }
+
+  /**
+   * Setup drag and drop functionality
+   */
+  function setupDragAndDrop() {
+    const overlay = container.querySelector('#dragDropOverlay');
+    const managerEl = container.querySelector('.data-import-manager');
+
+    if (!overlay || !managerEl) return;
+
+    let dragCounter = 0;
+
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      managerEl.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+
+    // Show overlay when dragging file over
+    managerEl.addEventListener('dragenter', (e) => {
+      dragCounter++;
+      if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+        overlay.classList.add('visible');
+      }
+    });
+
+    managerEl.addEventListener('dragleave', (e) => {
+      dragCounter--;
+      if (dragCounter === 0) {
+        overlay.classList.remove('visible');
+      }
+    });
+
+    // Handle file drop
+    managerEl.addEventListener('drop', async (e) => {
+      dragCounter = 0;
+      overlay.classList.remove('visible');
+
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        const file = files[0];
+        if (file.type === 'application/json' || file.name.endsWith('.json')) {
+          await importFromFileWithPreview(file);
+        } else {
+          showNotification('Please drop a JSON file', 'warning');
+        }
+      }
+    });
+  }
+
+  /**
+   * Setup keyboard shortcuts
+   */
+  function setupKeyboardShortcuts() {
+    const handleKeyPress = async (e) => {
+      // Ctrl/Cmd + V - Paste from clipboard
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+        // Only handle if not in an input field
+        if (!['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+          e.preventDefault();
+          await importFromClipboard();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+
+    // Store cleanup function
+    container._keydownHandler = handleKeyPress;
   }
 
   /**
@@ -125,6 +214,12 @@ export function createDataImportManager(container) {
           showNotification(`Export failed: ${error.message}`, 'error');
         }
       });
+    }
+
+    // Paste from clipboard button
+    const pasteBtn = container.querySelector('#pasteBtn');
+    if (pasteBtn) {
+      pasteBtn.addEventListener('click', () => importFromClipboard());
     }
 
     // Method cards
@@ -173,31 +268,242 @@ export function createDataImportManager(container) {
   }
 
   /**
-   * Show file upload dialog
+   * Import from clipboard
    */
-  function showFileUploadDialog() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json,application/json';
+  async function importFromClipboard() {
+    try {
+      const text = await navigator.clipboard.readText();
 
-    input.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        await importFromFile(file);
+      if (!text.trim()) {
+        showNotification('Clipboard is empty', 'warning');
+        return;
       }
-    });
 
-    input.click();
+      // Try to parse as JSON
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (error) {
+        showNotification('Clipboard does not contain valid JSON', 'error');
+        return;
+      }
+
+      // Show preview
+      await showImportPreview(data, 'clipboard');
+    } catch (error) {
+      showNotification('Failed to read clipboard. Please grant permission.', 'error');
+    }
   }
 
   /**
-   * Import from file
+   * Show import preview dialog
    */
-  async function importFromFile(file) {
-    try {
-      setImportProgress(true, `Importing from ${file.name}...`);
+  async function showImportPreview(data, source = 'unknown') {
+    // Get current data for comparison
+    const currentData = await dataImporter.exportData();
+    const currentStats = getDataStatistics(currentData);
 
-      const result = await dataImporter.importFromFile(file);
+    // Sanitize and validate new data
+    const sanitized = sanitizeGameData(data);
+    const validation = validateGameData(sanitized);
+    const newStats = getDataStatistics(sanitized);
+
+    // Calculate merged stats
+    const mergedData = dataImporter.mergeGameData(currentData, sanitized);
+    const mergedStats = getDataStatistics(mergedData);
+
+    // Detect changes
+    const changes = detectChanges(currentData, sanitized);
+
+    const modal = createModal('Import Preview', `
+      <div class="preview-container">
+        ${validation.valid ? '' : `
+          <div class="alert alert-error">
+            <strong>⚠️ Validation Errors (${validation.errors.length})</strong>
+            <div class="error-list">
+              ${renderValidationErrors(validation.errors)}
+            </div>
+          </div>
+        `}
+
+        <div class="preview-stats-comparison">
+          <div class="stats-column">
+            <h4>Current Data</h4>
+            <div class="stats-box">
+              <div class="stat-row"><span>Units:</span> <strong>${currentStats.totals.units}</strong></div>
+              <div class="stat-row"><span>Buildings:</span> <strong>${currentStats.totals.buildings}</strong></div>
+              <div class="stat-row"><span>Upgrades:</span> <strong>${currentStats.totals.upgrades}</strong></div>
+            </div>
+          </div>
+
+          <div class="stats-arrow">→</div>
+
+          <div class="stats-column">
+            <h4>After Import</h4>
+            <div class="stats-box">
+              <div class="stat-row">
+                <span>Units:</span>
+                <strong>${mergedStats.totals.units}</strong>
+                ${mergedStats.totals.units !== currentStats.totals.units ?
+                  `<span class="stat-diff ${mergedStats.totals.units > currentStats.totals.units ? 'positive' : 'negative'}">
+                    ${mergedStats.totals.units > currentStats.totals.units ? '+' : ''}${mergedStats.totals.units - currentStats.totals.units}
+                  </span>` : ''}
+              </div>
+              <div class="stat-row">
+                <span>Buildings:</span>
+                <strong>${mergedStats.totals.buildings}</strong>
+                ${mergedStats.totals.buildings !== currentStats.totals.buildings ?
+                  `<span class="stat-diff ${mergedStats.totals.buildings > currentStats.totals.buildings ? 'positive' : 'negative'}">
+                    ${mergedStats.totals.buildings > currentStats.totals.buildings ? '+' : ''}${mergedStats.totals.buildings - currentStats.totals.buildings}
+                  </span>` : ''}
+              </div>
+              <div class="stat-row">
+                <span>Upgrades:</span>
+                <strong>${mergedStats.totals.upgrades}</strong>
+                ${mergedStats.totals.upgrades !== currentStats.totals.upgrades ?
+                  `<span class="stat-diff ${mergedStats.totals.upgrades > currentStats.totals.upgrades ? 'positive' : 'negative'}">
+                    ${mergedStats.totals.upgrades > currentStats.totals.upgrades ? '+' : ''}${mergedStats.totals.upgrades - currentStats.totals.upgrades}
+                  </span>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        ${changes.new.length > 0 ? `
+          <div class="changes-section">
+            <h4>✅ New Entities (${changes.new.length})</h4>
+            <div class="changes-list">
+              ${changes.new.slice(0, 10).map(entity => `
+                <div class="change-item new">
+                  <span class="change-name">${entity.name}</span>
+                  <span class="change-type">${entity.race} • ${entity.type}</span>
+                </div>
+              `).join('')}
+              ${changes.new.length > 10 ? `<div class="change-more">+${changes.new.length - 10} more</div>` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        ${changes.updated.length > 0 ? `
+          <div class="changes-section">
+            <h4>📝 Updated Entities (${changes.updated.length})</h4>
+            <div class="changes-list">
+              ${changes.updated.slice(0, 10).map(entity => `
+                <div class="change-item updated">
+                  <span class="change-name">${entity.name}</span>
+                  <span class="change-details">${entity.changes}</span>
+                </div>
+              `).join('')}
+              ${changes.updated.length > 10 ? `<div class="change-more">+${changes.updated.length - 10} more</div>` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelPreview">Cancel</button>
+          <button class="btn-primary" id="confirmImport" ${!validation.valid ? 'disabled' : ''}>
+            ${validation.valid ? 'Confirm Import' : 'Cannot Import (Validation Errors)'}
+          </button>
+        </div>
+      </div>
+    `, 'large');
+
+    const confirmBtn = modal.querySelector('#confirmImport');
+    const cancelBtn = modal.querySelector('#cancelPreview');
+
+    confirmBtn?.addEventListener('click', async () => {
+      modal.remove();
+      await executeImport(sanitized, source);
+    });
+
+    cancelBtn?.addEventListener('click', () => modal.remove());
+  }
+
+  /**
+   * Detect changes between current and new data
+   */
+  function detectChanges(currentData, newData) {
+    const changes = { new: [], updated: [] };
+
+    ['protoss', 'terran', 'zerg'].forEach(race => {
+      if (!newData[race]) return;
+
+      ['units', 'buildings', 'upgrades'].forEach(type => {
+        if (!newData[race][type]) return;
+
+        Object.entries(newData[race][type]).forEach(([key, entity]) => {
+          const existing = currentData[race]?.[type]?.[key];
+
+          if (!existing) {
+            changes.new.push({
+              name: entity.name,
+              race: race,
+              type: type
+            });
+          } else {
+            // Check for changes
+            const diff = [];
+            if (existing.cost?.mineral !== entity.cost?.mineral) {
+              diff.push(`minerals: ${existing.cost.mineral}→${entity.cost.mineral}`);
+            }
+            if (existing.cost?.gas !== entity.cost?.gas) {
+              diff.push(`gas: ${existing.cost.gas}→${entity.cost.gas}`);
+            }
+            if (existing.time !== entity.time) {
+              diff.push(`time: ${existing.time}→${entity.time}`);
+            }
+
+            if (diff.length > 0) {
+              changes.updated.push({
+                name: entity.name,
+                changes: diff.join(', ')
+              });
+            }
+          }
+        });
+      });
+    });
+
+    return changes;
+  }
+
+  /**
+   * Render validation errors in a user-friendly format
+   */
+  function renderValidationErrors(errors) {
+    // Group errors by entity path
+    const grouped = {};
+    errors.forEach(error => {
+      // Extract entity path (e.g., "protoss.units.zealot")
+      const match = error.match(/^([\w.]+)/);
+      const path = match ? match[1] : 'general';
+
+      if (!grouped[path]) {
+        grouped[path] = [];
+      }
+      grouped[path].push(error);
+    });
+
+    return Object.entries(grouped).map(([path, pathErrors]) => `
+      <div class="error-group">
+        <div class="error-path">${path}</div>
+        ${pathErrors.map(err => `
+          <div class="error-item">
+            <span class="error-icon">✗</span>
+            <span class="error-message">${err.replace(path + '.', '')}</span>
+          </div>
+        `).join('')}
+      </div>
+    `).join('');
+  }
+
+  /**
+   * Execute import after preview confirmation
+   */
+  async function executeImport(data, source) {
+    try {
+      setEnhancedProgress(true, 'Importing data...', {});
+      const result = await dataImporter.importData(data, source);
 
       showNotification(
         `Import successful! Added ${result.stats.totals.units} units, ` +
@@ -211,7 +517,40 @@ export function createDataImportManager(container) {
     } catch (error) {
       showNotification(`Import failed: ${error.message}`, 'error');
     } finally {
-      setImportProgress(false);
+      setEnhancedProgress(false);
+    }
+  }
+
+  /**
+   * Show file upload dialog
+   */
+  function showFileUploadDialog() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.multiple = false;
+
+    input.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        await importFromFileWithPreview(file);
+      }
+    });
+
+    input.click();
+  }
+
+  /**
+   * Import from file with preview
+   */
+  async function importFromFileWithPreview(file) {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      await showImportPreview(data, 'file');
+    } catch (error) {
+      showNotification(`Failed to read file: ${error.message}`, 'error');
     }
   }
 
@@ -251,28 +590,25 @@ export function createDataImportManager(container) {
    */
   async function importFromURL(url) {
     try {
-      setImportProgress(true, `Importing from ${url}...`);
+      setEnhancedProgress(true, `Fetching from ${url}...`, {});
 
-      const result = await dataImporter.importFromURL(url);
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
 
-      showNotification(
-        `Import successful! Added ${result.stats.totals.units} units, ` +
-        `${result.stats.totals.buildings} buildings, ` +
-        `${result.stats.totals.upgrades} upgrades`,
-        'success'
-      );
+      const data = await response.json();
+      setEnhancedProgress(false);
 
-      updateDataStats();
-      updateHistory();
+      await showImportPreview(data, 'url');
     } catch (error) {
+      setEnhancedProgress(false);
       showNotification(`Import failed: ${error.message}`, 'error');
-    } finally {
-      setImportProgress(false);
     }
   }
 
   /**
-   * Import from Liquipedia
+   * Import from Liquipedia with enhanced progress
    */
   async function importFromLiquipedia() {
     const modal = createModal('Import from Liquipedia', `
@@ -310,18 +646,28 @@ export function createDataImportManager(container) {
       modal.remove();
 
       try {
-        setImportProgress(true, 'Scraping Liquipedia...');
+        // Initialize progress
+        scrapingProgress = {};
+        selectedRaces.forEach(race => {
+          scrapingProgress[race] = { status: 'pending', progress: 0, units: 0 };
+        });
+
+        setEnhancedProgress(true, 'Scraping Liquipedia...', scrapingProgress);
 
         // Listen to progress events
         const unsubscribe = dataImporter.on('scraping-progress', (progress) => {
-          setImportProgress(
-            true,
-            `Scraping ${progress.race}... (${progress.status})`
-          );
+          scrapingProgress[progress.race] = {
+            status: progress.status,
+            progress: progress.progress || 0,
+            units: progress.units || 0
+          };
+          setEnhancedProgress(true, 'Scraping Liquipedia...', scrapingProgress);
         });
 
         const result = await dataImporter.importFromLiquipedia(selectedRaces);
         unsubscribe();
+
+        setEnhancedProgress(false);
 
         showNotification(
           `Import successful! Scraped data for ${selectedRaces.join(', ')}`,
@@ -331,9 +677,8 @@ export function createDataImportManager(container) {
         updateDataStats();
         updateHistory();
       } catch (error) {
+        setEnhancedProgress(false);
         showNotification(`Import failed: ${error.message}`, 'error');
-      } finally {
-        setImportProgress(false);
       }
     });
 
@@ -345,7 +690,7 @@ export function createDataImportManager(container) {
    */
   async function loadTemplate() {
     try {
-      setImportProgress(true, 'Loading template...');
+      setEnhancedProgress(true, 'Loading template...', {});
 
       // Fetch template from scripts directory
       const response = await fetch('./scripts/sc2_data_template.json');
@@ -354,21 +699,12 @@ export function createDataImportManager(container) {
       }
 
       const data = await response.json();
-      const result = await dataImporter.importData(data, 'template');
+      setEnhancedProgress(false);
 
-      showNotification(
-        `Template loaded! Added ${result.stats.totals.units} units, ` +
-        `${result.stats.totals.buildings} buildings, ` +
-        `${result.stats.totals.upgrades} upgrades`,
-        'success'
-      );
-
-      updateDataStats();
-      updateHistory();
+      await showImportPreview(data, 'template');
     } catch (error) {
+      setEnhancedProgress(false);
       showNotification(`Failed to load template: ${error.message}`, 'error');
-    } finally {
-      setImportProgress(false);
     }
   }
 
@@ -406,8 +742,9 @@ export function createDataImportManager(container) {
       modal.remove();
 
       try {
-        setImportProgress(true, `Importing patch ${version}...`);
+        setEnhancedProgress(true, `Importing patch ${version}...`, {});
         const result = await dataImporter.importBalancePatch(version);
+        setEnhancedProgress(false);
 
         showNotification(
           `Patch ${version} imported successfully`,
@@ -417,9 +754,8 @@ export function createDataImportManager(container) {
         updateDataStats();
         updateHistory();
       } catch (error) {
+        setEnhancedProgress(false);
         showNotification(`Import failed: ${error.message}`, 'error');
-      } finally {
-        setImportProgress(false);
       }
     });
 
@@ -635,20 +971,53 @@ export function createDataImportManager(container) {
   }
 
   /**
-   * Set import progress
+   * Set enhanced import progress with race-specific progress bars
    */
-  function setImportProgress(inProgress, message = '') {
+  function setEnhancedProgress(inProgress, message = '', progressData = {}) {
     importInProgress = inProgress;
 
-    const progressContainer = container.querySelector('#importProgress');
-    const progressMessage = container.querySelector('#progressMessage');
+    const progressContainer = container.querySelector('#importProgressEnhanced');
+    const progressTitle = container.querySelector('#progressTitle');
+    const progressContent = container.querySelector('#progressContent');
 
-    if (progressContainer) {
-      progressContainer.style.display = inProgress ? 'block' : 'none';
-    }
+    if (!progressContainer) return;
 
-    if (progressMessage && message) {
-      progressMessage.textContent = message;
+    if (inProgress) {
+      progressContainer.style.display = 'block';
+      if (progressTitle) progressTitle.textContent = message;
+
+      // Render race-specific progress bars
+      if (Object.keys(progressData).length > 0) {
+        progressContent.innerHTML = `
+          <div class="race-progress-list">
+            ${Object.entries(progressData).map(([race, data]) => `
+              <div class="race-progress-item">
+                <div class="race-progress-header">
+                  <span class="race-name">${race.charAt(0).toUpperCase() + race.slice(1)}</span>
+                  <span class="race-status ${data.status}">${data.status}</span>
+                </div>
+                <div class="race-progress-bar">
+                  <div class="race-progress-fill" style="width: ${data.progress || 0}%"></div>
+                </div>
+                <div class="race-progress-info">
+                  ${data.units > 0 ? `${data.units} entities scraped` : 'Waiting...'}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        progressContent.innerHTML = `
+          <div class="simple-progress">
+            <div class="simple-progress-bar">
+              <div class="simple-progress-fill"></div>
+            </div>
+          </div>
+        `;
+      }
+    } else {
+      progressContainer.style.display = 'none';
+      progressContent.innerHTML = '';
     }
   }
 
@@ -716,6 +1085,10 @@ export function createDataImportManager(container) {
 
   return {
     destroy: () => {
+      // Cleanup
+      if (container._keydownHandler) {
+        document.removeEventListener('keydown', container._keydownHandler);
+      }
       container.innerHTML = '';
     }
   };

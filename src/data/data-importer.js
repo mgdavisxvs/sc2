@@ -145,14 +145,31 @@ export class DataImporter {
   async importFromLiquipedia(races = ['protoss', 'terran', 'zerg']) {
     try {
       const data = {};
+      const totalRaces = races.length;
 
-      for (const race of races) {
-        this.emit('scraping-progress', { race, status: 'started' });
+      for (let i = 0; i < races.length; i++) {
+        const race = races[i];
+        const progress = Math.round((i / totalRaces) * 100);
+
+        this.emit('scraping-progress', {
+          race,
+          status: 'started',
+          progress: progress,
+          units: 0
+        });
 
         const raceData = await this.scrapeLiquipediaRace(race);
         data[race] = raceData;
 
-        this.emit('scraping-progress', { race, status: 'completed' });
+        const unitsCount = Object.keys(raceData.units || {}).length;
+        const completedProgress = Math.round(((i + 1) / totalRaces) * 100);
+
+        this.emit('scraping-progress', {
+          race,
+          status: 'completed',
+          progress: completedProgress,
+          units: unitsCount
+        });
       }
 
       return await this.importData(data, 'liquipedia', { races });
