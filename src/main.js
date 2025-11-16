@@ -19,6 +19,7 @@ import createVisualizationDashboard from './ui/visualization-dashboard.js';
 import renderBuildLibrary from './ui/build-library.js';
 import createMRTSDashboard from './ui/mrts-dashboard.js';
 import createComparisonDashboard from './ui/build-comparison.js';
+import createTechTreeUI from './ui/tech-tree.js';
 import { getBuildDatabase } from './data/build-database.js';
 
 // Global database instance
@@ -426,6 +427,64 @@ function initEventHandlers() {
     if (modal) {
       modal.classList.add('hidden');
       document.body.style.overflow = '';
+    }
+  });
+
+  // Open tech tree
+  let techTreeController = null;
+  $('#openTechTree')?.addEventListener('click', () => {
+    if (!state.data || !state.norm) {
+      showStatus('Load sc2units.json first to view tech tree', 'error', 3000);
+      return;
+    }
+
+    const modal = $('#techTreeModal');
+    const container = $('#techTreeContainer');
+
+    if (!modal || !container) {
+      showStatus('Tech tree modal not found', 'error');
+      return;
+    }
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    // Create tech tree UI
+    try {
+      techTreeController = createTechTreeUI(
+        container,
+        state.norm,
+        state.race,
+        state.build,
+        (item) => {
+          // Add node to build
+          tryAddToBuild(item);
+
+          // Update tech tree to reflect new build state
+          if (techTreeController) {
+            techTreeController.update(state.build);
+          }
+        }
+      );
+      showStatus('Tech tree loaded', 'success');
+    } catch (err) {
+      logger.error('Tech tree error:', err);
+      showStatus('Failed to render tech tree: ' + err.message, 'error', 4000);
+    }
+  });
+
+  // Close tech tree modal
+  $('#closeTechTree')?.addEventListener('click', () => {
+    const modal = $('#techTreeModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+
+      // Clean up tech tree controller
+      if (techTreeController) {
+        techTreeController.destroy();
+        techTreeController = null;
+      }
     }
   });
 

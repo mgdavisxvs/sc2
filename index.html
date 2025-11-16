@@ -148,6 +148,10 @@
                 class="text-xs px-3 py-1 rounded border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800">
           Auto Build
         </button>
+        <button id="openTechTree"
+                class="text-xs px-3 py-1 rounded bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 transition">
+          🌳 Tech Tree
+        </button>
         <button id="exportBuild"
                 class="text-xs px-3 py-1 rounded bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900">
           Export Build
@@ -393,6 +397,33 @@
 
     <div id="comparisonContainer" class="max-w-[1600px] mx-auto px-6 py-6">
       <!-- Comparison content will be dynamically loaded here -->
+    </div>
+  </div>
+
+  <!-- Tech Tree Modal -->
+  <div id="techTreeModal"
+       class="fixed inset-0 hidden bg-white dark:bg-slate-900 z-50 overflow-hidden">
+    <div class="h-full flex flex-col">
+      <div class="flex-none bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 shadow-sm">
+        <div class="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Interactive Tech Tree
+            </h2>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+              Click to add • Shift+Click for auto-complete • Visual dependency graph
+            </p>
+          </div>
+          <button id="closeTechTree"
+                  class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-sm font-medium">
+            ✕ Close
+          </button>
+        </div>
+      </div>
+
+      <div id="techTreeContainer" class="flex-1 overflow-hidden">
+        <!-- Tech tree will be rendered here -->
+      </div>
     </div>
   </div>
 
