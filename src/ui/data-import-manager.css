@@ -1286,3 +1286,328 @@ html[data-theme="dark"] .entity-table td:nth-child(3) {
 html[data-theme="dark"] .no-entities {
   color: #9ca3af;
 }
+
+/* ========================================
+   Advanced Features - Bulk & Filtering
+   ======================================== */
+
+/* Extra Large Modal */
+.modal-extra-large {
+  width: 95%;
+  max-width: 1400px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Enhanced Entity Browser */
+.entity-browser-enhanced {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 600px;
+}
+
+/* Filter Panel */
+.filter-panel {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 8px;
+  padding: 16px;
+  border: 2px solid #dee2e6;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.filter-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.btn-toggle-filters {
+  padding: 4px 12px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-toggle-filters:hover {
+  background: #5a6268;
+}
+
+.filter-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #495057;
+  font-size: 14px;
+}
+
+.checkbox-group {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.filter-input {
+  width: 100px;
+  padding: 6px 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  margin-right: 8px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.btn-apply-filter {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #28a745, #218838);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-apply-filter:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(33, 136, 56, 0.3);
+}
+
+.btn-clear-filter {
+  padding: 8px 16px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-clear-filter:hover {
+  background: #5a6268;
+}
+
+/* Enhanced Search Box */
+.search-box-enhanced {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  border: 2px solid #2196F3;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+}
+
+.search-box-enhanced input {
+  flex: 1;
+}
+
+.entity-count {
+  font-weight: 600;
+  color: #2196F3;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+/* Bulk Actions Bar */
+.bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  border-radius: 8px;
+  border: 2px solid #ffc107;
+}
+
+.selected-count {
+  font-weight: 600;
+  color: #856404;
+  font-size: 14px;
+}
+
+.btn-bulk-delete {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.btn-bulk-delete:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(200, 35, 51, 0.3);
+}
+
+.btn-deselect-all {
+  padding: 8px 16px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.btn-deselect-all:hover {
+  background: #5a6268;
+}
+
+/* Clone Button */
+.btn-clone {
+  background: linear-gradient(135deg, #17a2b8, #138496);
+  color: white;
+}
+
+.btn-clone:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(19, 132, 150, 0.3);
+}
+
+/* Clone Form */
+.clone-form {
+  padding: 20px 0;
+}
+
+.clone-source {
+  padding: 12px;
+  background: #e7f3ff;
+  border-left: 4px solid #2196F3;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.info-box {
+  padding: 12px;
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  border-radius: 4px;
+  margin: 16px 0;
+  font-size: 14px;
+  color: #856404;
+}
+
+/* Entity Table Enhancements for Bulk Select */
+.entity-table th:first-child,
+.entity-table td:first-child {
+  width: 40px;
+  text-align: center;
+}
+
+.entity-checkbox {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+#selectAllCheckbox {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Dark Mode - Advanced Features */
+html[data-theme="dark"] .filter-panel {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border-color: #334155;
+}
+
+html[data-theme="dark"] .filter-header h4 {
+  color: #e5e7eb;
+}
+
+html[data-theme="dark"] .filter-group label {
+  color: #d1d5db;
+}
+
+html[data-theme="dark"] .filter-input {
+  background: #0f172a;
+  border-color: #334155;
+  color: #e5e7eb;
+}
+
+html[data-theme="dark"] .search-box-enhanced {
+  background: #1e293b;
+  border-color: #1976D2;
+}
+
+html[data-theme="dark"] .entity-count {
+  color: #60a5fa;
+}
+
+html[data-theme="dark"] .bulk-actions {
+  background: linear-gradient(135deg, #78350f, #451a03);
+  border-color: #f59e0b;
+}
+
+html[data-theme="dark"] .selected-count {
+  color: #fbbf24;
+}
+
+html[data-theme="dark"] .clone-source {
+  background: #1e3a5f;
+  border-color: #60a5fa;
+  color: #e5e7eb;
+}
+
+html[data-theme="dark"] .info-box {
+  background: #78350f;
+  border-color: #f59e0b;
+  color: #fbbf24;
+}

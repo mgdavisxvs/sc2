@@ -715,6 +715,212 @@ export class DataImporter {
   }
 
   /**
+   * Bulk delete multiple entities
+   *
+   * @param {Array} entities - Array of {race, entityType, key}
+   * @returns {Promise<Object>} - Delete result
+   */
+  async bulkDeleteEntities(entities) {
+    try {
+      const cached = await this.cache.getGameData();
+      const data = cached?.data || {};
+
+      // Store backup before deleting
+      await this.storeBackup(cached);
+
+      let deletedCount = 0;
+      const errors = [];
+
+      entities.forEach(({ race, entityType, key }) => {
+        if (data[race]?.[entityType]?.[key]) {
+          delete data[race][entityType][key];
+          deletedCount++;
+
+          // Clean up empty objects
+          if (Object.keys(data[race][entityType]).length === 0) {
+            delete data[race][entityType];
+          }
+          if (Object.keys(data[race]).length === 0) {
+            delete data[race];
+          }
+        } else {
+          errors.push(`Entity not found: ${race}.${entityType}.${key}`);
+        }
+      });
+
+      // Save to cache
+      await this.cache.setGameData(data, cached?.version || 'unknown');
+
+      // Add to history
+      const result = {
+        success: true,
+        source: 'bulk-delete',
+        stats: { deleted: deletedCount },
+        errors: errors.length > 0 ? errors : undefined,
+        version: cached?.version
+      };
+      await this.addToHistory('bulk-delete', result);
+
+      this.emit('entities-bulk-deleted', { count: deletedCount, errors });
+
+      return result;
+    } catch (error) {
+      throw new ImportError(
+        'Failed to bulk delete entities',
+        'bulk-delete',
+        { error: error.message }
+      );
+    }
+  }
+
+  /**
+   * Duplicate an entity (clone)
+   *
+   * @param {string} race - Race
+   * @param {string} entityType - Entity type
+   * @param {string} sourceKey - Source entity key
+   * @param {string} newKey - New entity key
+   * @param {string} newName - New entity name
+   * @returns {Promise<Object>} - Duplicate result
+   */
+  async duplicateEntity(race, entityType, sourceKey, newKey, newName) {
+    try {
+      const cached = await this.cache.getGameData();
+      const data = cached?.data || {};
+
+      // Store backup before duplicating
+      await this.storeBackup(cached);
+
+      // Check if source exists
+      if (!data[race]?.[entityType]?.[sourceKey]) {
+        throw new Error('Source entity not found');
+      }
+
+      // Check if target already exists
+      if (data[race]?.[entityType]?.[newKey]) {
+        throw new Error('Target entity key already exists');
+      }
+
+      // Clone the entity
+      const sourceEntity = data[race][entityType][sourceKey];
+      const newEntity = JSON.parse(JSON.stringify(sourceEntity));
+      newEntity.name = newName;
+
+      // Ensure structure exists
+      if (!data[race]) data[race] = {};
+      if (!data[race][entityType]) data[race][entityType] = {};
+
+      // Add new entity
+      data[race][entityType][newKey] = newEntity;
+
+      // Save to cache
+      await this.cache.setGameData(data, cached?.version || 'unknown');
+
+      // Add to history
+      const result = {
+        success: true,
+        source: 'duplicate',
+        stats: { added: 1 },
+        version: cached?.version
+      };
+      await this.addToHistory('duplicate', result);
+
+      this.emit('entity-duplicated', { race, entityType, key: newKey, data: newEntity });
+
+      return result;
+    } catch (error) {
+      throw new ImportError(
+        `Failed to duplicate entity ${sourceKey}`,
+        'duplicate',
+        { error: error.message, race, entityType, sourceKey, newKey }
+      );
+    }
+  }
+
+  /**
+   * Filter entities by multiple criteria
+   *
+   * @param {Object} filters - Filter criteria
+   * @returns {Promise<Array>} - Filtered entities
+   */
+  async filterEntities(filters) {
+    const allEntities = await this.getAllEntities();
+
+    return allEntities.filter(entity => {
+      // Filter by race
+      if (filters.races && filters.races.length > 0) {
+        if (!filters.races.includes(entity.race)) return false;
+      }
+
+      // Filter by type
+      if (filters.types && filters.types.length > 0) {
+        if (!filters.types.includes(entity.entityType)) return false;
+      }
+
+      // Filter by mineral cost range
+      if (filters.mineralMin !== undefined) {
+        const mineral = entity.data.cost?.mineral || 0;
+        if (mineral < filters.mineralMin) return false;
+      }
+      if (filters.mineralMax !== undefined) {
+        const mineral = entity.data.cost?.mineral || 0;
+        if (mineral > filters.mineralMax) return false;
+      }
+
+      // Filter by gas cost range
+      if (filters.gasMin !== undefined) {
+        const gas = entity.data.cost?.gas || 0;
+        if (gas < filters.gasMin) return false;
+      }
+      if (filters.gasMax !== undefined) {
+        const gas = entity.data.cost?.gas || 0;
+        if (gas > filters.gasMax) return false;
+      }
+
+      // Filter by build time range
+      if (filters.timeMin !== undefined) {
+        const time = entity.data.time || 0;
+        if (time < filters.timeMin) return false;
+      }
+      if (filters.timeMax !== undefined) {
+        const time = entity.data.time || 0;
+        if (time > filters.timeMax) return false;
+      }
+
+      // Filter by name/key search
+      if (filters.search) {
+        const query = filters.search.toLowerCase();
+        const matchName = entity.name.toLowerCase().includes(query);
+        const matchKey = entity.key.toLowerCase().includes(query);
+        if (!matchName && !matchKey) return false;
+      }
+
+      return true;
+    });
+  }
+
+  /**
+   * Get detailed history entry
+   *
+   * @param {number} index - History index
+   * @returns {Promise<Object>} - Detailed history entry
+   */
+  async getHistoryDetails(index) {
+    const entry = this.importHistory[index];
+    if (!entry) {
+      throw new Error('History entry not found');
+    }
+
+    // Return enhanced entry with detailed stats
+    return {
+      ...entry,
+      detailedStats: entry.stats,
+      timestamp: new Date(entry.timestamp).toLocaleString(),
+      canUndo: index === 0 // Can only undo the most recent
+    };
+  }
+
+  /**
    * Get import history
    */
   getHistory() {

@@ -1120,34 +1120,171 @@ export function createDataImportManager(container) {
       }
 
       const modal = createModal('Manage Entities', `
-        <div class="entity-browser">
-          <div class="search-box">
-            <input type="text" id="entitySearch" class="form-control"
-                   placeholder="Search entities by name...">
+        <div class="entity-browser-enhanced">
+          <!-- Advanced Filters -->
+          <div class="filter-panel" id="filterPanel">
+            <div class="filter-header">
+              <h4>🔍 Filters</h4>
+              <button class="btn-toggle-filters" id="toggleFilters">Hide</button>
+            </div>
+            <div class="filter-content" id="filterContent">
+              <div class="filter-row">
+                <div class="filter-group">
+                  <label>Race:</label>
+                  <div class="checkbox-group">
+                    <label><input type="checkbox" name="race" value="protoss" checked> Protoss</label>
+                    <label><input type="checkbox" name="race" value="terran" checked> Terran</label>
+                    <label><input type="checkbox" name="race" value="zerg" checked> Zerg</label>
+                  </div>
+                </div>
+                <div class="filter-group">
+                  <label>Type:</label>
+                  <div class="checkbox-group">
+                    <label><input type="checkbox" name="type" value="units" checked> Units</label>
+                    <label><input type="checkbox" name="type" value="buildings" checked> Buildings</label>
+                    <label><input type="checkbox" name="type" value="upgrades" checked> Upgrades</label>
+                  </div>
+                </div>
+              </div>
+              <div class="filter-row">
+                <div class="filter-group">
+                  <label>Mineral Cost:</label>
+                  <input type="number" id="mineralMin" placeholder="Min" class="filter-input">
+                  <input type="number" id="mineralMax" placeholder="Max" class="filter-input">
+                </div>
+                <div class="filter-group">
+                  <label>Gas Cost:</label>
+                  <input type="number" id="gasMin" placeholder="Min" class="filter-input">
+                  <input type="number" id="gasMax" placeholder="Max" class="filter-input">
+                </div>
+              </div>
+              <div class="filter-actions">
+                <button class="btn-apply-filter" id="applyFilters">Apply Filters</button>
+                <button class="btn-clear-filter" id="clearFilters">Clear All</button>
+              </div>
+            </div>
           </div>
 
+          <!-- Search Box -->
+          <div class="search-box-enhanced">
+            <input type="text" id="entitySearch" class="form-control"
+                   placeholder="Search entities by name or key...">
+            <span class="entity-count" id="entityCount">${entities.length} entities</span>
+          </div>
+
+          <!-- Bulk Actions -->
+          <div class="bulk-actions" id="bulkActions" style="display: none;">
+            <span class="selected-count" id="selectedCount">0 selected</span>
+            <button class="btn-bulk-delete" id="bulkDeleteBtn">🗑️ Delete Selected</button>
+            <button class="btn-deselect-all" id="deselectAllBtn">Clear Selection</button>
+          </div>
+
+          <!-- Entity List -->
           <div class="entity-list" id="entityList">
-            ${renderEntityList(entities)}
+            ${renderEntityList(entities, true)}
           </div>
         </div>
-      `, 'large');
+      `, 'extra-large');
 
       const searchInput = modal.querySelector('#entitySearch');
       const entityList = modal.querySelector('#entityList');
+      const entityCount = modal.querySelector('#entityCount');
+      const bulkActions = modal.querySelector('#bulkActions');
+      const selectedCount = modal.querySelector('#selectedCount');
 
+      let currentEntities = entities;
+      let selectedEntities = new Set();
+
+      // Search functionality
       searchInput?.addEventListener('input', async (e) => {
-        const query = e.target.value.trim();
-        if (query.length >= 2) {
-          const filtered = await dataImporter.searchEntities(query);
-          entityList.innerHTML = renderEntityList(filtered);
-          attachEntityListListeners(modal);
-        } else {
-          entityList.innerHTML = renderEntityList(entities);
-          attachEntityListListeners(modal);
-        }
+        await applyCurrentFilters();
       });
 
-      attachEntityListListeners(modal);
+      // Filter toggle
+      const toggleFiltersBtn = modal.querySelector('#toggleFilters');
+      const filterContent = modal.querySelector('#filterContent');
+      toggleFiltersBtn?.addEventListener('click', () => {
+        const isHidden = filterContent.style.display === 'none';
+        filterContent.style.display = isHidden ? 'block' : 'none';
+        toggleFiltersBtn.textContent = isHidden ? 'Hide' : 'Show';
+      });
+
+      // Apply filters
+      const applyFiltersBtn = modal.querySelector('#applyFilters');
+      applyFiltersBtn?.addEventListener('click', applyCurrentFilters);
+
+      // Clear filters
+      const clearFiltersBtn = modal.querySelector('#clearFilters');
+      clearFiltersBtn?.addEventListener('click', () => {
+        modal.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+        modal.querySelectorAll('.filter-input').forEach(input => input.value = '');
+        searchInput.value = '';
+        applyCurrentFilters();
+      });
+
+      // Bulk actions
+      const bulkDeleteBtn = modal.querySelector('#bulkDeleteBtn');
+      const deselectAllBtn = modal.querySelector('#deselectAllBtn');
+
+      bulkDeleteBtn?.addEventListener('click', async () => {
+        if (selectedEntities.size === 0) return;
+
+        const confirmed = confirm(`Delete ${selectedEntities.size} selected entities?`);
+        if (!confirmed) return;
+
+        const entitiesToDelete = Array.from(selectedEntities).map(key => {
+          const [race, entityType, entityKey] = key.split('::');
+          return { race, entityType, key: entityKey };
+        });
+
+        modal.remove();
+        await handleBulkDeleteEntities(entitiesToDelete);
+      });
+
+      deselectAllBtn?.addEventListener('click', () => {
+        selectedEntities.clear();
+        updateSelection();
+      });
+
+      // Apply current filters
+      async function applyCurrentFilters() {
+        const filters = {
+          races: Array.from(modal.querySelectorAll('input[name="race"]:checked')).map(cb => cb.value),
+          types: Array.from(modal.querySelectorAll('input[name="type"]:checked')).map(cb => cb.value),
+          mineralMin: parseInt(modal.querySelector('#mineralMin').value) || undefined,
+          mineralMax: parseInt(modal.querySelector('#mineralMax').value) || undefined,
+          gasMin: parseInt(modal.querySelector('#gasMin').value) || undefined,
+          gasMax: parseInt(modal.querySelector('#gasMax').value) || undefined,
+          search: searchInput.value.trim() || undefined
+        };
+
+        currentEntities = await dataImporter.filterEntities(filters);
+        entityList.innerHTML = renderEntityList(currentEntities, true);
+        entityCount.textContent = `${currentEntities.length} entities`;
+        attachEntityListListeners(modal, selectedEntities, updateSelection);
+        updateSelection();
+      }
+
+      // Update selection UI
+      function updateSelection() {
+        selectedCount.textContent = `${selectedEntities.size} selected`;
+        bulkActions.style.display = selectedEntities.size > 0 ? 'flex' : 'none';
+
+        // Update checkboxes
+        modal.querySelectorAll('.entity-checkbox').forEach(cb => {
+          const key = cb.dataset.key;
+          cb.checked = selectedEntities.has(key);
+        });
+
+        // Update select all checkbox
+        const selectAllCb = modal.querySelector('#selectAllCheckbox');
+        if (selectAllCb) {
+          const allKeys = currentEntities.map(e => `${e.race}::${e.entityType}::${e.key}`);
+          selectAllCb.checked = allKeys.length > 0 && allKeys.every(k => selectedEntities.has(k));
+        }
+      }
+
+      attachEntityListListeners(modal, selectedEntities, updateSelection);
     } catch (error) {
       showNotification(error.message || 'Failed to load entities', 'error');
     }
@@ -1156,7 +1293,7 @@ export function createDataImportManager(container) {
   /**
    * Render entity list HTML
    */
-  function renderEntityList(entities) {
+  function renderEntityList(entities, enableBulkSelect = false) {
     if (entities.length === 0) {
       return '<div class="no-entities">No entities found</div>';
     }
@@ -1165,6 +1302,7 @@ export function createDataImportManager(container) {
       <table class="entity-table">
         <thead>
           <tr>
+            ${enableBulkSelect ? '<th><input type="checkbox" id="selectAllCheckbox" title="Select All"></th>' : ''}
             <th>Name</th>
             <th>Race</th>
             <th>Type</th>
@@ -1173,18 +1311,23 @@ export function createDataImportManager(container) {
           </tr>
         </thead>
         <tbody>
-          ${entities.map(entity => `
+          ${entities.map(entity => {
+            const entityKey = `${entity.race}::${entity.entityType}::${entity.key}`;
+            return `
             <tr data-key="${entity.key}" data-race="${entity.race}" data-type="${entity.entityType}">
+              ${enableBulkSelect ? `<td><input type="checkbox" class="entity-checkbox" data-key="${entityKey}"></td>` : ''}
               <td>${entity.name}</td>
               <td>${entity.race}</td>
               <td>${entity.entityType}</td>
               <td>${entity.data.cost ? `${entity.data.cost.mineral}m ${entity.data.cost.gas}g` : '-'}</td>
-              <td>
+              <td class="action-buttons">
+                <button class="btn-small btn-clone" title="Clone">📋 Clone</button>
                 <button class="btn-small btn-edit" title="Edit">✏️ Edit</button>
                 <button class="btn-small btn-delete" title="Delete">🗑️ Delete</button>
               </td>
             </tr>
-          `).join('')}
+          `;
+          }).join('')}
         </tbody>
       </table>
     `;
@@ -1193,10 +1336,54 @@ export function createDataImportManager(container) {
   /**
    * Attach event listeners to entity list
    */
-  function attachEntityListListeners(modal) {
+  function attachEntityListListeners(modal, selectedEntities = null, updateSelection = null) {
     const editButtons = modal.querySelectorAll('.btn-edit');
     const deleteButtons = modal.querySelectorAll('.btn-delete');
+    const cloneButtons = modal.querySelectorAll('.btn-clone');
 
+    // Select all checkbox
+    const selectAllCb = modal.querySelector('#selectAllCheckbox');
+    if (selectAllCb && selectedEntities && updateSelection) {
+      selectAllCb.addEventListener('change', (e) => {
+        const checkboxes = modal.querySelectorAll('.entity-checkbox');
+        if (e.target.checked) {
+          checkboxes.forEach(cb => selectedEntities.add(cb.dataset.key));
+        } else {
+          checkboxes.forEach(cb => selectedEntities.delete(cb.dataset.key));
+        }
+        updateSelection();
+      });
+    }
+
+    // Individual checkboxes
+    const entityCheckboxes = modal.querySelectorAll('.entity-checkbox');
+    if (entityCheckboxes.length > 0 && selectedEntities && updateSelection) {
+      entityCheckboxes.forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          if (e.target.checked) {
+            selectedEntities.add(cb.dataset.key);
+          } else {
+            selectedEntities.delete(cb.dataset.key);
+          }
+          updateSelection();
+        });
+      });
+    }
+
+    // Clone buttons
+    cloneButtons.forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const row = e.target.closest('tr');
+        const key = row.dataset.key;
+        const race = row.dataset.race;
+        const type = row.dataset.type;
+
+        modal.remove();
+        await showCloneEntityDialog(race, type, key);
+      });
+    });
+
+    // Edit buttons
     editButtons.forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const row = e.target.closest('tr');
@@ -1209,13 +1396,16 @@ export function createDataImportManager(container) {
       });
     });
 
+    // Delete buttons
     deleteButtons.forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const row = e.target.closest('tr');
         const key = row.dataset.key;
         const race = row.dataset.race;
         const type = row.dataset.type;
-        const name = row.querySelector('td:first-child').textContent;
+        const cells = row.querySelectorAll('td');
+        const nameCell = cells.length > 5 ? cells[1] : cells[0]; // Account for checkbox column
+        const name = nameCell.textContent;
 
         const confirmed = confirm(`Delete ${name} from ${race} ${type}?`);
         if (confirmed) {
@@ -1225,6 +1415,118 @@ export function createDataImportManager(container) {
         }
       });
     });
+  }
+
+  /**
+   * Show clone entity dialog
+   */
+  async function showCloneEntityDialog(race, entityType, sourceKey) {
+    try {
+      const data = await dataImporter.exportData();
+      const entity = data[race]?.[entityType]?.[sourceKey];
+
+      if (!entity) {
+        showNotification('Source entity not found', 'error');
+        return;
+      }
+
+      const modal = createModal('Clone Entity', `
+        <div class="clone-form">
+          <p class="clone-source">Cloning: <strong>${entity.name}</strong></p>
+
+          <div class="form-group">
+            <label for="cloneKey">New Entity Key:</label>
+            <input type="text" id="cloneKey" class="form-control"
+                   placeholder="e.g., zealot_variant">
+          </div>
+
+          <div class="form-group">
+            <label for="cloneName">New Entity Name:</label>
+            <input type="text" id="cloneName" class="form-control"
+                   value="${entity.name} (Copy)">
+          </div>
+
+          <div class="info-box">
+            All other properties (costs, time, requirements) will be copied from the original entity.
+            You can edit them after cloning.
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn-secondary" id="cancelBtn">Cancel</button>
+            <button class="btn-primary" id="cloneBtn">Clone Entity</button>
+          </div>
+        </div>
+      `, 'medium');
+
+      const cloneBtn = modal.querySelector('#cloneBtn');
+      const cancelBtn = modal.querySelector('#cancelBtn');
+
+      cloneBtn.addEventListener('click', async () => {
+        const newKey = modal.querySelector('#cloneKey').value.trim();
+        const newName = modal.querySelector('#cloneName').value.trim();
+
+        if (!newKey) {
+          showNotification('Please enter a new entity key', 'warning');
+          return;
+        }
+
+        if (!newName) {
+          showNotification('Please enter a new entity name', 'warning');
+          return;
+        }
+
+        modal.remove();
+        await handleCloneEntity(race, entityType, sourceKey, newKey, newName);
+      });
+
+      cancelBtn.addEventListener('click', () => modal.remove());
+    } catch (error) {
+      showNotification(error.message || 'Failed to load entity', 'error');
+    }
+  }
+
+  /**
+   * Handle entity cloning
+   */
+  async function handleCloneEntity(race, entityType, sourceKey, newKey, newName) {
+    try {
+      setEnhancedProgress(true, 'Cloning entity...');
+
+      await dataImporter.duplicateEntity(race, entityType, sourceKey, newKey, newName);
+
+      setEnhancedProgress(false);
+      showNotification(`Successfully cloned "${newName}"`, 'success');
+      updateDataStats();
+      updateHistory();
+    } catch (error) {
+      setEnhancedProgress(false);
+      showNotification(error.message || 'Failed to clone entity', 'error');
+    }
+  }
+
+  /**
+   * Handle bulk delete entities
+   */
+  async function handleBulkDeleteEntities(entities) {
+    try {
+      setEnhancedProgress(true, `Deleting ${entities.length} entities...`);
+
+      const result = await dataImporter.bulkDeleteEntities(entities);
+
+      setEnhancedProgress(false);
+
+      if (result.errors && result.errors.length > 0) {
+        showNotification(`Deleted ${result.stats.deleted} entities (${result.errors.length} errors)`, 'warning');
+      } else {
+        showNotification(`Successfully deleted ${result.stats.deleted} entities`, 'success');
+      }
+
+      updateDataStats();
+      updateHistory();
+    } catch (error) {
+      setEnhancedProgress(false);
+      showNotification(error.message || 'Failed to bulk delete entities', 'error');
+    }
   }
 
   /**
@@ -1389,6 +1691,14 @@ export function createDataImportManager(container) {
   });
 
   dataImporter.on('data-restored', () => {
+    updateDataStats();
+  });
+
+  dataImporter.on('entity-duplicated', () => {
+    updateDataStats();
+  });
+
+  dataImporter.on('entities-bulk-deleted', () => {
     updateDataStats();
   });
 
