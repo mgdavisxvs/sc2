@@ -1,0 +1,589 @@
+{
+  "protoss": {
+    "units": {
+      "probe": {
+        "name": "Probe",
+        "cost": { "mineral": 50, "gas": 0 },
+        "supply": { "required": 1 },
+        "time": 17,
+        "tech_tree": { "requires": ["Nexus"] }
+      },
+      "zealot": {
+        "name": "Zealot",
+        "cost": { "mineral": 100, "gas": 0 },
+        "supply": { "required": 2 },
+        "time": 38,
+        "tech_tree": { "requires": ["Gateway"] }
+      },
+      "stalker": {
+        "name": "Stalker",
+        "cost": { "mineral": 125, "gas": 50 },
+        "supply": { "required": 2 },
+        "time": 42,
+        "tech_tree": { "requires": ["Gateway", "Cybernetics Core"] }
+      },
+      "sentry": {
+        "name": "Sentry",
+        "cost": { "mineral": 50, "gas": 100 },
+        "supply": { "required": 2 },
+        "time": 37,
+        "tech_tree": { "requires": ["Gateway", "Cybernetics Core"] }
+      },
+      "adept": {
+        "name": "Adept",
+        "cost": { "mineral": 100, "gas": 25 },
+        "supply": { "required": 2 },
+        "time": 30,
+        "tech_tree": { "requires": ["Gateway", "Cybernetics Core"] }
+      },
+      "hightemplar": {
+        "name": "High Templar",
+        "cost": { "mineral": 50, "gas": 150 },
+        "supply": { "required": 2 },
+        "time": 55,
+        "tech_tree": { "requires": ["Gateway", "Templar Archives"] }
+      },
+      "darktemplar": {
+        "name": "Dark Templar",
+        "cost": { "mineral": 125, "gas": 125 },
+        "supply": { "required": 2 },
+        "time": 55,
+        "tech_tree": { "requires": ["Gateway", "Dark Shrine"] }
+      },
+      "immortal": {
+        "name": "Immortal",
+        "cost": { "mineral": 275, "gas": 100 },
+        "supply": { "required": 4 },
+        "time": 55,
+        "tech_tree": { "requires": ["Robotics Facility"] }
+      },
+      "colossus": {
+        "name": "Colossus",
+        "cost": { "mineral": 300, "gas": 200 },
+        "supply": { "required": 6 },
+        "time": 75,
+        "tech_tree": { "requires": ["Robotics Facility", "Robotics Bay"] }
+      },
+      "disruptor": {
+        "name": "Disruptor",
+        "cost": { "mineral": 150, "gas": 150 },
+        "supply": { "required": 3 },
+        "time": 50,
+        "tech_tree": { "requires": ["Robotics Facility", "Robotics Bay"] }
+      },
+      "warpprism": {
+        "name": "Warp Prism",
+        "cost": { "mineral": 200, "gas": 0 },
+        "supply": { "required": 2 },
+        "time": 50,
+        "tech_tree": { "requires": ["Robotics Facility"] }
+      },
+      "observer": {
+        "name": "Observer",
+        "cost": { "mineral": 25, "gas": 75 },
+        "supply": { "required": 1 },
+        "time": 30,
+        "tech_tree": { "requires": ["Robotics Facility"] }
+      },
+      "phoenix": {
+        "name": "Phoenix",
+        "cost": { "mineral": 150, "gas": 100 },
+        "supply": { "required": 2 },
+        "time": 35,
+        "tech_tree": { "requires": ["Stargate"] }
+      },
+      "voidray": {
+        "name": "Void Ray",
+        "cost": { "mineral": 250, "gas": 150 },
+        "supply": { "required": 4 },
+        "time": 60,
+        "tech_tree": { "requires": ["Stargate"] }
+      },
+      "oracle": {
+        "name": "Oracle",
+        "cost": { "mineral": 150, "gas": 150 },
+        "supply": { "required": 3 },
+        "time": 50,
+        "tech_tree": { "requires": ["Stargate"] }
+      },
+      "tempest": {
+        "name": "Tempest",
+        "cost": { "mineral": 300, "gas": 200 },
+        "supply": { "required": 6 },
+        "time": 60,
+        "tech_tree": { "requires": ["Stargate", "Fleet Beacon"] }
+      },
+      "carrier": {
+        "name": "Carrier",
+        "cost": { "mineral": 350, "gas": 250 },
+        "supply": { "required": 6 },
+        "time": 120,
+        "tech_tree": { "requires": ["Stargate", "Fleet Beacon"] }
+      },
+      "mothership": {
+        "name": "Mothership",
+        "cost": { "mineral": 400, "gas": 400 },
+        "supply": { "required": 8 },
+        "time": 160,
+        "tech_tree": { "requires": ["Nexus", "Fleet Beacon"] }
+      }
+    },
+    "buildings": {
+      "nexus": {
+        "name": "Nexus",
+        "cost": { "mineral": 400, "gas": 0 },
+        "supply": { "provided": 15 },
+        "time": 100,
+        "tech_tree": { "requires": [] }
+      },
+      "pylon": {
+        "name": "Pylon",
+        "cost": { "mineral": 100, "gas": 0 },
+        "supply": { "provided": 8 },
+        "time": 25,
+        "tech_tree": { "requires": [] }
+      },
+      "assimilator": {
+        "name": "Assimilator",
+        "cost": { "mineral": 75, "gas": 0 },
+        "supply": { "provided": 0 },
+        "time": 30,
+        "tech_tree": { "requires": [] }
+      },
+      "gateway": {
+        "name": "Gateway",
+        "cost": { "mineral": 150, "gas": 0 },
+        "supply": { "provided": 0 },
+        "time": 65,
+        "tech_tree": { "requires": ["Pylon"] }
+      },
+      "forge": {
+        "name": "Forge",
+        "cost": { "mineral": 150, "gas": 0 },
+        "supply": { "provided": 0 },
+        "time": 45,
+        "tech_tree": { "requires": ["Pylon"] }
+      },
+      "cyberneticscore": {
+        "name": "Cybernetics Core",
+        "cost": { "mineral": 150, "gas": 0 },
+        "supply": { "provided": 0 },
+        "time": 50,
+        "tech_tree": { "requires": ["Gateway"] }
+      },
+      "photoncannon": {
+        "name": "Photon Cannon",
+        "cost": { "mineral": 150, "gas": 0 },
+        "supply": { "provided": 0 },
+        "time": 40,
+        "tech_tree": { "requires": ["Forge"] }
+      },
+      "shieldbattery": {
+        "name": "Shield Battery",
+        "cost": { "mineral": 100, "gas": 0 },
+        "supply": { "provided": 0 },
+        "time": 40,
+        "tech_tree": { "requires": ["Cybernetics Core"] }
+      },
+      "twilightcouncil": {
+        "name": "Twilight Council",
+        "cost": { "mineral": 150, "gas": 100 },
+        "supply": { "provided": 0 },
+        "time": 50,
+        "tech_tree": { "requires": ["Cybernetics Core"] }
+      },
+      "templararchives": {
+        "name": "Templar Archives",
+        "cost": { "mineral": 150, "gas": 200 },
+        "supply": { "provided": 0 },
+        "time": 50,
+        "tech_tree": { "requires": ["Twilight Council"] }
+      },
+      "darkshrine": {
+        "name": "Dark Shrine",
+        "cost": { "mineral": 150, "gas": 150 },
+        "supply": { "provided": 0 },
+        "time": 100,
+        "tech_tree": { "requires": ["Twilight Council"] }
+      },
+      "roboticsfacility": {
+        "name": "Robotics Facility",
+        "cost": { "mineral": 200, "gas": 100 },
+        "supply": { "provided": 0 },
+        "time": 65,
+        "tech_tree": { "requires": ["Cybernetics Core"] }
+      },
+      "roboticsbay": {
+        "name": "Robotics Bay",
+        "cost": { "mineral": 200, "gas": 200 },
+        "supply": { "provided": 0 },
+        "time": 65,
+        "tech_tree": { "requires": ["Robotics Facility"] }
+      },
+      "stargate": {
+        "name": "Stargate",
+        "cost": { "mineral": 150, "gas": 150 },
+        "supply": { "provided": 0 },
+        "time": 60,
+        "tech_tree": { "requires": ["Cybernetics Core"] }
+      },
+      "fleetbeacon": {
+        "name": "Fleet Beacon",
+        "cost": { "mineral": 300, "gas": 200 },
+        "supply": { "provided": 0 },
+        "time": 60,
+        "tech_tree": { "requires": ["Stargate"] }
+      }
+    },
+    "upgrades": {
+      "charge": {
+        "name": "Charge",
+        "cost": { "mineral": 200, "gas": 200 },
+        "time": 140,
+        "tech_tree": { "requires": ["Twilight Council"] }
+      },
+      "blink": {
+        "name": "Blink",
+        "cost": { "mineral": 150, "gas": 150 },
+        "time": 170,
+        "tech_tree": { "requires": ["Twilight Council"] }
+      },
+      "resonatingglaives": {
+        "name": "Resonating Glaives",
+        "cost": { "mineral": 100, "gas": 100 },
+        "time": 140,
+        "tech_tree": { "requires": ["Twilight Council"] }
+      },
+      "groundweapons1": {
+        "name": "Ground Weapons 1",
+        "cost": { "mineral": 100, "gas": 100 },
+        "time": 160,
+        "tech_tree": { "requires": ["Forge"] }
+      },
+      "groundarmor1": {
+        "name": "Ground Armor 1",
+        "cost": { "mineral": 100, "gas": 100 },
+        "time": 160,
+        "tech_tree": { "requires": ["Forge"] }
+      },
+      "shields1": {
+        "name": "Shields 1",
+        "cost": { "mineral": 150, "gas": 150 },
+        "time": 160,
+        "tech_tree": { "requires": ["Forge"] }
+      }
+    }
+  },
+  "terran": {
+    "units": {
+      "scv": {
+        "name": "SCV",
+        "cost": { "mineral": 50, "gas": 0 },
+        "supply": { "required": 1 },
+        "time": 17,
+        "tech_tree": { "requires": ["Command Center"] }
+      },
+      "marine": {
+        "name": "Marine",
+        "cost": { "mineral": 50, "gas": 0 },
+        "supply": { "required": 1 },
+        "time": 25,
+        "tech_tree": { "requires": ["Barracks"] }
+      },
+      "marauder": {
+        "name": "Marauder",
+        "cost": { "mineral": 100, "gas": 25 },
+        "supply": { "required": 2 },
+        "time": 30,
+        "tech_tree": { "requires": ["Barracks", "Tech Lab"] }
+      },
+      "reaper": {
+        "name": "Reaper",
+        "cost": { "mineral": 50, "gas": 50 },
+        "supply": { "required": 1 },
+        "time": 45,
+        "tech_tree": { "requires": ["Barracks"] }
+      },
+      "ghost": {
+        "name": "Ghost",
+        "cost": { "mineral": 150, "gas": 125 },
+        "supply": { "required": 2 },
+        "time": 40,
+        "tech_tree": { "requires": ["Barracks", "Tech Lab", "Ghost Academy"] }
+      },
+      "hellion": {
+        "name": "Hellion",
+        "cost": { "mineral": 100, "gas": 0 },
+        "supply": { "required": 2 },
+        "time": 30,
+        "tech_tree": { "requires": ["Factory"] }
+      },
+      "siegetank": {
+        "name": "Siege Tank",
+        "cost": { "mineral": 150, "gas": 125 },
+        "supply": { "required": 3 },
+        "time": 45,
+        "tech_tree": { "requires": ["Factory", "Tech Lab"] }
+      },
+      "thor": {
+        "name": "Thor",
+        "cost": { "mineral": 300, "gas": 200 },
+        "supply": { "required": 6 },
+        "time": 60,
+        "tech_tree": { "requires": ["Factory", "Tech Lab", "Armory"] }
+      },
+      "viking": {
+        "name": "Viking",
+        "cost": { "mineral": 150, "gas": 75 },
+        "supply": { "required": 2 },
+        "time": 42,
+        "tech_tree": { "requires": ["Starport"] }
+      },
+      "medivac": {
+        "name": "Medivac",
+        "cost": { "mineral": 100, "gas": 100 },
+        "supply": { "required": 2 },
+        "time": 42,
+        "tech_tree": { "requires": ["Starport"] }
+      },
+      "banshee": {
+        "name": "Banshee",
+        "cost": { "mineral": 150, "gas": 100 },
+        "supply": { "required": 3 },
+        "time": 60,
+        "tech_tree": { "requires": ["Starport", "Tech Lab"] }
+      },
+      "raven": {
+        "name": "Raven",
+        "cost": { "mineral": 100, "gas": 200 },
+        "supply": { "required": 2 },
+        "time": 60,
+        "tech_tree": { "requires": ["Starport", "Tech Lab"] }
+      },
+      "battlecruiser": {
+        "name": "Battlecruiser",
+        "cost": { "mineral": 400, "gas": 300 },
+        "supply": { "required": 6 },
+        "time": 90,
+        "tech_tree": { "requires": ["Starport", "Tech Lab", "Fusion Core"] }
+      }
+    },
+    "buildings": {
+      "commandcenter": {
+        "name": "Command Center",
+        "cost": { "mineral": 400, "gas": 0 },
+        "supply": { "provided": 15 },
+        "time": 100,
+        "tech_tree": { "requires": [] }
+      },
+      "supplydepot": {
+        "name": "Supply Depot",
+        "cost": { "mineral": 100, "gas": 0 },
+        "supply": { "provided": 8 },
+        "time": 30,
+        "tech_tree": { "requires": [] }
+      },
+      "refinery": {
+        "name": "Refinery",
+        "cost": { "mineral": 75, "gas": 0 },
+        "supply": { "provided": 0 },
+        "time": 30,
+        "tech_tree": { "requires": [] }
+      },
+      "barracks": {
+        "name": "Barracks",
+        "cost": { "mineral": 150, "gas": 0 },
+        "supply": { "provided": 0 },
+        "time": 65,
+        "tech_tree": { "requires": ["Supply Depot"] }
+      },
+      "factory": {
+        "name": "Factory",
+        "cost": { "mineral": 150, "gas": 100 },
+        "supply": { "provided": 0 },
+        "time": 60,
+        "tech_tree": { "requires": ["Barracks"] }
+      },
+      "starport": {
+        "name": "Starport",
+        "cost": { "mineral": 150, "gas": 100 },
+        "supply": { "provided": 0 },
+        "time": 50,
+        "tech_tree": { "requires": ["Factory"] }
+      },
+      "engineeringbay": {
+        "name": "Engineering Bay",
+        "cost": { "mineral": 125, "gas": 0 },
+        "supply": { "provided": 0 },
+        "time": 35,
+        "tech_tree": { "requires": ["Command Center"] }
+      },
+      "armory": {
+        "name": "Armory",
+        "cost": { "mineral": 150, "gas": 100 },
+        "supply": { "provided": 0 },
+        "time": 65,
+        "tech_tree": { "requires": ["Factory"] }
+      },
+      "fusioncore": {
+        "name": "Fusion Core",
+        "cost": { "mineral": 150, "gas": 150 },
+        "supply": { "provided": 0 },
+        "time": 65,
+        "tech_tree": { "requires": ["Starport"] }
+      }
+    },
+    "upgrades": {
+      "stimpacks": {
+        "name": "Stim Packs",
+        "cost": { "mineral": 100, "gas": 100 },
+        "time": 170,
+        "tech_tree": { "requires": ["Barracks", "Tech Lab"] }
+      },
+      "combatshields": {
+        "name": "Combat Shields",
+        "cost": { "mineral": 100, "gas": 100 },
+        "time": 110,
+        "tech_tree": { "requires": ["Barracks", "Tech Lab"] }
+      },
+      "concussiveshells": {
+        "name": "Concussive Shells",
+        "cost": { "mineral": 50, "gas": 50 },
+        "time": 60,
+        "tech_tree": { "requires": ["Barracks", "Tech Lab"] }
+      }
+    }
+  },
+  "zerg": {
+    "units": {
+      "drone": {
+        "name": "Drone",
+        "cost": { "mineral": 50, "gas": 0 },
+        "supply": { "required": 1 },
+        "time": 17,
+        "tech_tree": { "requires": ["Hatchery"] }
+      },
+      "overlord": {
+        "name": "Overlord",
+        "cost": { "mineral": 100, "gas": 0 },
+        "supply": { "required": 0, "provided": 8 },
+        "time": 25,
+        "tech_tree": { "requires": ["Hatchery"] }
+      },
+      "zergling": {
+        "name": "Zergling",
+        "cost": { "mineral": 50, "gas": 0 },
+        "supply": { "required": 1 },
+        "time": 24,
+        "tech_tree": { "requires": ["Spawning Pool"] }
+      },
+      "queen": {
+        "name": "Queen",
+        "cost": { "mineral": 150, "gas": 0 },
+        "supply": { "required": 2 },
+        "time": 50,
+        "tech_tree": { "requires": ["Spawning Pool"] }
+      },
+      "roach": {
+        "name": "Roach",
+        "cost": { "mineral": 75, "gas": 25 },
+        "supply": { "required": 2 },
+        "time": 27,
+        "tech_tree": { "requires": ["Roach Warren"] }
+      },
+      "hydralisk": {
+        "name": "Hydralisk",
+        "cost": { "mineral": 100, "gas": 50 },
+        "supply": { "required": 2 },
+        "time": 33,
+        "tech_tree": { "requires": ["Hydralisk Den"] }
+      },
+      "mutalisk": {
+        "name": "Mutalisk",
+        "cost": { "mineral": 100, "gas": 100 },
+        "supply": { "required": 2 },
+        "time": 33,
+        "tech_tree": { "requires": ["Spire"] }
+      },
+      "corruptor": {
+        "name": "Corruptor",
+        "cost": { "mineral": 150, "gas": 100 },
+        "supply": { "required": 2 },
+        "time": 40,
+        "tech_tree": { "requires": ["Spire"] }
+      },
+      "ultralisk": {
+        "name": "Ultralisk",
+        "cost": { "mineral": 300, "gas": 200 },
+        "supply": { "required": 6 },
+        "time": 55,
+        "tech_tree": { "requires": ["Ultralisk Cavern"] }
+      }
+    },
+    "buildings": {
+      "hatchery": {
+        "name": "Hatchery",
+        "cost": { "mineral": 300, "gas": 0 },
+        "supply": { "provided": 6 },
+        "time": 100,
+        "tech_tree": { "requires": [] }
+      },
+      "spawningpool": {
+        "name": "Spawning Pool",
+        "cost": { "mineral": 200, "gas": 0 },
+        "supply": { "provided": 0 },
+        "time": 65,
+        "tech_tree": { "requires": ["Hatchery"] }
+      },
+      "extractor": {
+        "name": "Extractor",
+        "cost": { "mineral": 25, "gas": 0 },
+        "supply": { "provided": 0 },
+        "time": 30,
+        "tech_tree": { "requires": [] }
+      },
+      "roachwarren": {
+        "name": "Roach Warren",
+        "cost": { "mineral": 150, "gas": 0 },
+        "supply": { "provided": 0 },
+        "time": 55,
+        "tech_tree": { "requires": ["Spawning Pool"] }
+      },
+      "hydraliskden": {
+        "name": "Hydralisk Den",
+        "cost": { "mineral": 100, "gas": 100 },
+        "supply": { "provided": 0 },
+        "time": 40,
+        "tech_tree": { "requires": ["Lair"] }
+      },
+      "spire": {
+        "name": "Spire",
+        "cost": { "mineral": 200, "gas": 200 },
+        "supply": { "provided": 0 },
+        "time": 100,
+        "tech_tree": { "requires": ["Lair"] }
+      },
+      "ultraliskcavern": {
+        "name": "Ultralisk Cavern",
+        "cost": { "mineral": 150, "gas": 200 },
+        "supply": { "provided": 0 },
+        "time": 65,
+        "tech_tree": { "requires": ["Hive"] }
+      }
+    },
+    "upgrades": {
+      "metabolicboost": {
+        "name": "Metabolic Boost",
+        "cost": { "mineral": 100, "gas": 100 },
+        "time": 110,
+        "tech_tree": { "requires": ["Spawning Pool"] }
+      },
+      "adrenalglands": {
+        "name": "Adrenal Glands",
+        "cost": { "mineral": 200, "gas": 200 },
+        "time": 130,
+        "tech_tree": { "requires": ["Spawning Pool", "Hive"] }
+      }
+    }
+  }
+}

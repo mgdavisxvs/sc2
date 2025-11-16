@@ -350,12 +350,36 @@ The app uses ES6 modules, so it must be served via HTTP (not opened as `file://`
 
 ## 🎮 Usage
 
-1. **Load Game Data**: Drag & drop `sc2units.json` or click "Load JSON"
-2. **Browse Units**: Switch between races and categories
-3. **Build Orders**: Click "Add" to add units to your build
-4. **Drag to Reorder**: Reorder build steps via drag-and-drop
-5. **Auto Build**: Generate template builds for each race
-6. **Export**: Copy as text/JSON or download
+### Loading Game Data
+
+**Option 1: Use Pre-filled Template**
+```bash
+# Copy the comprehensive template (150+ units/buildings/upgrades)
+cp scripts/sc2_data_template.json sc2units.json
+./start.sh
+```
+
+**Option 2: Drag & Drop**
+1. Drag `sc2units.json` file into browser window
+2. Data loads automatically
+
+**Option 3: File Picker**
+1. Click "Load JSON" button
+2. Select `sc2units.json` from file dialog
+
+**Need more data?** See [DATA_SOURCES.md](DATA_SOURCES.md) for:
+- Web scraping from Liquipedia
+- Community APIs
+- Manual data entry guide
+- Balance patch updates
+
+### Basic Usage
+
+1. **Browse Units**: Switch between races and categories
+2. **Build Orders**: Click "Add" to add units to your build
+3. **Drag to Reorder**: Reorder build steps via drag-and-drop
+4. **Auto Build**: Generate template builds for each race
+5. **Export**: Copy as text/JSON or download
 
 ### Advanced Features (Console)
 
