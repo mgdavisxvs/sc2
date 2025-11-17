@@ -3,6 +3,8 @@
  * Manages worker lifecycle and provides Promise-based API
  */
 
+import { enhancedLogger } from '../core/enhanced-logger.js';
+
 export class WorkerManager {
   constructor(workerPath, workerCount = 1) {
     this.workerPath = workerPath;
@@ -63,7 +65,7 @@ export class WorkerManager {
 
     const task = this.pendingTasks.get(id);
     if (!task) {
-      console.warn('Received message for unknown task:', id);
+      enhancedLogger.warn('Received message for unknown task', { taskId: id });
       return;
     }
 

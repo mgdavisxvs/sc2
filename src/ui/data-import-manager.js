@@ -11,6 +11,8 @@
 
 import { dataImporter } from '../data/data-importer.js';
 import { getDataStatistics, validateGameData, sanitizeGameData } from '../data/data-validator.js';
+import { enhancedLogger } from '../core/enhanced-logger.js';
+import { ERROR_CODES } from '../core/error-codes.js';
 
 /**
  * Create Enhanced Data Import Manager UI
@@ -25,7 +27,7 @@ export function createDataImportManager(container) {
 
   // Initialize importer
   dataImporter.init().catch(error => {
-    console.error('Failed to initialize data importer:', error);
+    enhancedLogger.error('Failed to initialize data importer', error, { code: ERROR_CODES.SYS_INITIALIZATION_ERROR });
   });
 
   /**

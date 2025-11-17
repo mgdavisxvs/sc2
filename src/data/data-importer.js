@@ -11,6 +11,8 @@
 
 import { validateGameData, sanitizeGameData, getDataStatistics } from './data-validator.js';
 import { IndexedDBCache } from './indexeddb-cache.js';
+import { enhancedLogger } from '../core/enhanced-logger.js';
+import { ERROR_CODES } from '../core/error-codes.js';
 
 /**
  * Data import error class
@@ -52,7 +54,7 @@ export class DataImporter {
         this.importHistory = history;
       }
     } catch (error) {
-      console.warn('Failed to load import history:', error);
+      enhancedLogger.warn('Failed to load import history', { error: error.message });
     }
   }
 
@@ -63,7 +65,7 @@ export class DataImporter {
     try {
       await this.cache.set('import-history', this.importHistory, Infinity);
     } catch (error) {
-      console.error('Failed to save import history:', error);
+      enhancedLogger.error('Failed to save import history', error, { code: ERROR_CODES.DATA_IMP_HISTORY_ERROR });
     }
   }
 
@@ -508,7 +510,7 @@ export class DataImporter {
 
       await this.cache.set('data-backups', backups, Infinity);
     } catch (error) {
-      console.error('Failed to store backup:', error);
+      enhancedLogger.error('Failed to store backup', error, { code: ERROR_CODES.DATA_IMP_BACKUP_FAILED });
     }
   }
 
@@ -954,7 +956,7 @@ export class DataImporter {
         try {
           callback(data);
         } catch (error) {
-          console.error(`Error in ${event} listener:`, error);
+          enhancedLogger.error(`Error in ${event} listener`, error, { event, code: ERROR_CODES.UI_EVENT_HANDLER_ERROR });
         }
       });
     }

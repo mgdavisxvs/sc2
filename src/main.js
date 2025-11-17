@@ -5,6 +5,9 @@
 
 import { state } from './core/state.js';
 import { logger } from './core/logger.js';
+import { enhancedLogger } from './core/enhanced-logger.js';
+import { globalErrorHandler } from './core/global-error-handler.js';
+import { errorMonitor } from './core/error-monitor.js';
 import { AUTO_TEMPLATES } from './core/config.js';
 import { $, $$, by, debounce } from './utils/dom.js';
 import { loadFromFile, loadEmbeddedData, getSchemaSummary } from './data/parser.js';
@@ -588,6 +591,19 @@ function initEventHandlers() {
 function bootstrap() {
   logger.info('SC2 Build Lab starting...');
 
+  // Make showStatus globally available for error handler
+  window.showStatus = showStatus;
+
+  // Initialize error handling system
+  globalErrorHandler.logger = enhancedLogger;
+  globalErrorHandler.showUserNotification = showStatus;
+  globalErrorHandler.init();
+
+  // Initialize error monitoring (disabled by default)
+  errorMonitor.init();
+
+  enhancedLogger.info('Error handling system initialized');
+
   // Initialize theme
   initTheme();
 
@@ -603,7 +619,7 @@ function bootstrap() {
   // Setup event handlers
   initEventHandlers();
 
-  logger.info('SC2 Build Lab ready');
+  enhancedLogger.info('SC2 Build Lab ready');
 }
 
 // Start app when DOM is ready
@@ -619,4 +635,7 @@ window.SC2BuildLab = {
   db: () => db,
   refresh: refreshDisplay,
   logger,
+  enhancedLogger,
+  errorHandler: globalErrorHandler,
+  errorMonitor,
 };
